@@ -1,0 +1,15 @@
+# xv6 compiled artifacts
+*.o
+*.d
+*.asm
+*.sym
+xv6.img
+fs.img
+kernel/kernel
+user/_*
+.gdbinit
+
+# Agent and harness logs
+host/logs/*.raw
+host/logs/*.jsonl
+harness/*.csv
