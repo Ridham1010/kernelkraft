@@ -90,8 +90,10 @@ sys_uptime(void)
   return xticks;
 }
 
-int sys_hello(void) {
-  cprintf("Hello from kernel\n");
+int
+sys_hello(void)
+{
+  cprintf("hello from kernel\n");
   return 0;
 }
 
