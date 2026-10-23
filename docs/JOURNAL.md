@@ -1,0 +1,4 @@
+# Journal
+
+| Date | Stage | Entry |
+|---|---:|---|
