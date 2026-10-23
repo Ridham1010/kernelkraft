@@ -1,0 +1,2 @@
+Command: python3 -c "import host.config"
+Result: exit 0

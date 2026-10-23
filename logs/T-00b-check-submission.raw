@@ -1,0 +1,24 @@
+warning: no docs/gdb evidence file before stage 8
+Packaged files:
+docs/CONTRIBUTIONS.md
+docs/DESIGN.md
+docs/EVIDENCE_INDEX.md
+docs/JOURNAL.md
+docs/LIMITATIONS.md
+docs/PARAMS.md
+docs/REPORT_NOTES.md
+docs/SYSCALLS.md
+docs/TEST_TABLE.md
+docs/VIVA.md
+host/config.json
+host/config.py
+logs/T-00a-current-tree.raw
+logs/T-00b-check-submission.raw
+logs/T-00c-host-config.raw
+PLAN.md
+tools/check_submission.sh
+tools/make_zip.sh
+xv6-public/sched_params.h
+Total size: 44K
+
+command_exit=0
