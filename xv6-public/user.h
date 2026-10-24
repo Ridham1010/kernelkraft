@@ -1,9 +1,14 @@
+#include "sched_api.h"
+
 struct stat;
 struct rtcdate;
 
 // system calls
 int hello(void);
 int add(int,int);
+int setsched(int policy);
+int setworkflow(int wid, int deadline);
+int schedinfo(struct sched_stats *stats);
 int fork(void);
 int exit(void) __attribute__((noreturn));
 int wait(void);
@@ -39,3 +44,4 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
+

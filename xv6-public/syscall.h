@@ -22,3 +22,7 @@
 #define SYS_close  21
 #define SYS_hello  22
 #define SYS_add    23
+#define SYS_setsched  24
+#define SYS_setworkflow  25
+#define SYS_schedinfo  26
+

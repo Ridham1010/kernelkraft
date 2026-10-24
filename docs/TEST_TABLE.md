@@ -8,3 +8,12 @@
 | T-03 | 1 | `ticktest` | Run through QEMU | Prints a tick difference of about 500; compute ticks/second from the stopwatch | Passed; difference 500, stopwatch 5.106 seconds, approximately 97.9 ticks/second | `logs/T-03-ticktest.raw` | Timing |
 | T-04 | 1 | `usertests` after `FSSIZE` change | Run through QEMU | `ALL TESTS PASSED` | Passed; exact success line observed | `logs/T-04-usertests.raw` | Regression |
 | T-05 | 2 | Remove the `UPROGS` entry temporarily | Rebuild and run `hello_test`, then restore | `hello_test: not found`; restore succeeds | PENDING |  | Negative |
+| T-06 | 2 | `schedctl edf; edftest, CPUS=1` | Set EDF policy, run edftest | deadline-100 child finishes first | Passed; child A at tick 1370, child B at tick 1423 |  | Functional |
+| T-07 | 2 | `schedctl rr; edftest, CPUS=1` | Set RR policy, run edftest | both finish close together (contrast) | Passed; both children at tick 7191 |  | Functional |
+| T-08 | 2 | `schedctl edf; usertests` | Set EDF policy, run usertests | ALL TESTS PASSED (also exercises the tie-break) | Passed; ALL TESTS PASSED |  | Regression |
+| T-09 | 2 | `schedctl rr; usertests` | Set RR policy, run usertests | ALL TESTS PASSED | Passed; ALL TESTS PASSED |  | Regression |
+| T-10 | 2 | `schedctl edf_donate; usertests` | Set EDF+Donate policy, run usertests (donation not written yet) | ALL TESTS PASSED | Passed; ALL TESTS PASSED |  | Regression |
+| T-11 | 2 | `setsched(7)` | Call setsched with invalid policy | returns -1 | Passed; setsched(7) = -1 |  | Negative |
+| T-12 | 2 | `setworkflow(1,0)` and a second `setworkflow` call | Call setworkflow with deadline=0, then call again | -1 for both | Passed; setworkflow(1,0)=-1, second call=-1 |  | Negative |
+| T-13 | 2 | boot with CPUS=3 | Boot xv6 with 3 CPUs | no panic | Passed; booted with CPUS=3, no panic |  | Functional |
+

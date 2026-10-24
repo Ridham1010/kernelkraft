@@ -34,6 +34,9 @@ struct context {
 
 enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
+// Forward declaration for pipe (used in proc.c for waiting_pipe)
+struct pipe;
+
 // Per-process state
 struct proc {
   uint sz;                     // Size of process memory (bytes)
@@ -49,6 +52,14 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+
+  // Stage 2: scheduling fields
+  int wid;                     // Workflow ID (0 = none)
+  uint deadline;               // Absolute deadline (NO_DEADLINE if none)
+  uint donated;                // Donated deadline (NO_DEADLINE if none)
+  struct pipe *waiting_pipe;   // Pipe this process is waiting on
+  uint last_run;               // Monotonic counter for tie-breaking
+  int missed;                  // Number of deadline misses for this process
 };
 
 // Process memory is laid out contiguously, low addresses first:
@@ -56,3 +67,4 @@ struct proc {
 //   original data and bss
 //   fixed-size stack
 //   expandable heap
+

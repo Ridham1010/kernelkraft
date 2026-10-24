@@ -31,3 +31,7 @@ SYSCALL(sleep)
 SYSCALL(uptime)
 SYSCALL(hello)
 SYSCALL(add)
+SYSCALL(setsched)
+SYSCALL(setworkflow)
+SYSCALL(schedinfo)
+

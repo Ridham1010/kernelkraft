@@ -6,6 +6,8 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "sched_params.h"
+#include "sched_api.h"
 
 struct {
   struct spinlock lock;
@@ -20,10 +22,194 @@ extern void trapret(void);
 
 static void wakeup1(void *chan);
 
+// PAGEBREAK: 17
+// Initialize process table lock
 void
 pinit(void)
 {
   initlock(&ptable.lock, "ptable");
+}
+
+// Stage 2: scheduling policy globals
+int sched_policy = 0;  // 0=rr, 1=edf, 2=edf_donate
+uint runcounter = 0;   // Monotonic counter for tie-breaking
+
+// Stage 2: workflows table
+struct workflow {
+  int wid;             // Workflow ID (0 = unused)
+  uint abs_deadline;   // Absolute deadline for this workflow
+  int nmembers;        // Number of processes in this workflow
+  int misses;          // Number of deadline misses
+  int rejected;        // Number of rejected admissions
+} workflows[NWF];
+
+// Stage 2: Helper function - read ticks without lock (for use under ptable.lock)
+// Not static - called from sysproc.c
+inline uint
+now_ticks(void)
+{
+  // Unlocked volatile read of ticks - 32-bit aligned read is atomic on x86
+  return ticks;
+}
+
+// Stage 2: Helper function - compare deadlines with wrap-around safety
+// Returns 1 if a is before b (i.e., a's deadline is earlier/more urgent)
+static int
+dl_before(uint a, uint b)
+{
+  // Use signed comparison to handle wrap-around correctly
+  // (int)(a - b) < 0 means a is before b in modular arithmetic
+  return (int)(a - b) < 0;
+}
+
+// Stage 2: Helper function - get effective deadline for a process
+// Returns the more urgent (earlier) of deadline and donated
+static uint
+effective(struct proc *p)
+{
+  uint d = p->deadline;
+  if (p->donated != NO_DEADLINE && dl_before(p->donated, d))
+    return p->donated;
+  return d;
+}
+
+// Stage 2: Admission check stub - always returns 0 (success) for now
+// Not static - called from sysproc.c
+int
+admission_check_locked(struct proc *p, int wid, uint deadline)
+{
+  // Stub for Stage 2 - donation logic will be added in Stage 3
+  return 0;
+}
+
+// Stage 2: Workflow leave helper - called from exit() with ptable.lock held
+static void
+wf_leave_locked(struct proc *p)
+{
+  if (p->wid <= 0 || p->wid >= NWF)
+    return;
+  
+  struct workflow *w = &workflows[p->wid];
+  if (w->wid != p->wid)
+    return;  // Workflow not initialized or already freed
+  
+  w->nmembers--;
+  if (w->nmembers <= 0) {
+    // Free the workflow slot
+    w->wid = 0;
+    w->abs_deadline = 0;
+    w->misses = 0;
+    w->rejected = 0;
+  }
+}
+
+// Stage 2: Workflow accessor functions (called with ptable.lock held by caller)
+
+// Get workflow by ID
+struct workflow*
+get_workflow(int wid)
+{
+  if (wid <= 0 || wid >= NWF)
+    return 0;
+  if (workflows[wid].wid != wid)
+    return 0;
+  return &workflows[wid];
+}
+
+// Sum of misses across all workflows
+int
+workflow_misses(void)
+{
+  int total = 0;
+  for (int i = 0; i < NWF; i++) {
+    if (workflows[i].wid != 0)
+      total += workflows[i].misses;
+  }
+  return total;
+}
+
+// Sum of rejected across all workflows
+int
+workflow_rejected(void)
+{
+  int total = 0;
+  for (int i = 0; i < NWF; i++) {
+    if (workflows[i].wid != 0)
+      total += workflows[i].rejected;
+  }
+  return total;
+}
+
+// Stage 2: sys_setworkflow implementation - called from sysproc.c
+int
+sys_setworkflow_impl(int wid, int deadline)
+{
+  struct proc *curproc = myproc();
+  uint now = now_ticks();
+  
+  // Validate wid: must be 1..NWF-1 (0 is reserved for no workflow)
+  if(wid <= 0 || wid >= NWF)
+    return -1;
+  
+  // Validate deadline: must be > 0
+  if(deadline <= 0)
+    return -1;
+  
+  // Check if process already has a workflow (cannot call twice)
+  if(curproc->wid != 0)
+    return -1;
+  
+  acquire(&ptable.lock);
+  
+  // Check if workflow slot is already in use
+  struct workflow *w = get_workflow(wid);
+  if (w) {
+    // Workflow exists - check if deadline matches
+    if(w->abs_deadline != now + deadline) {
+      w->rejected++;
+      release(&ptable.lock);
+      return -1;
+    }
+  } else {
+    // First caller - initialize workflow
+    w = &workflows[wid];
+    w->wid = wid;
+    w->abs_deadline = now + deadline;
+    w->nmembers = 0;
+    w->misses = 0;
+    w->rejected = 0;
+  }
+  
+  // Admission check (stub for now)
+  if(admission_check_locked(curproc, wid, deadline) < 0) {
+    w->rejected++;
+    release(&ptable.lock);
+    return -1;
+  }
+  
+  // Assign process to workflow
+  curproc->wid = wid;
+  curproc->deadline = w->abs_deadline;
+  w->nmembers++;
+  
+  release(&ptable.lock);
+  return 0;
+}
+
+// Stage 2: sys_schedinfo implementation - called from sysproc.c
+int
+sys_schedinfo_impl(struct sched_stats *stats)
+{
+  // Fill in the stats structure
+  stats->policy = sched_policy;
+  stats->ncpu = ncpu;
+  stats->ticks = now_ticks();
+  stats->misses = workflow_misses();
+  stats->donations = 0;
+  stats->cycles = runcounter;
+  stats->rejected = workflow_rejected();
+  
+  return 0;
 }
 
 // Must be called with interrupts disabled
@@ -88,6 +274,14 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+
+  // Stage 2: Initialize scheduling fields
+  p->wid = 0;
+  p->deadline = NO_DEADLINE;
+  p->donated = NO_DEADLINE;
+  p->waiting_pipe = 0;
+  p->last_run = 0;
+  p->missed = 0;
 
   release(&ptable.lock);
 
@@ -210,6 +404,14 @@ fork(void)
 
   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
 
+  // Stage 2: Copy scheduling fields from parent
+  np->wid = curproc->wid;
+  np->deadline = curproc->deadline;
+  np->donated = NO_DEADLINE;  // Donated deadline is not inherited
+  np->waiting_pipe = 0;
+  np->last_run = 0;
+  np->missed = 0;
+
   pid = np->pid;
 
   acquire(&ptable.lock);
@@ -248,6 +450,9 @@ exit(void)
   curproc->cwd = 0;
 
   acquire(&ptable.lock);
+
+  // Stage 2: Leave workflow if part of one
+  wf_leave_locked(curproc);
 
   // Parent might be sleeping in wait().
   wakeup1(curproc->parent);
@@ -330,28 +535,73 @@ scheduler(void)
     // Enable interrupts on this processor.
     sti();
 
-    // Loop over process table looking for process to run.
-    acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
+    // Policy 0: Original round-robin scheduler (unchanged)
+    if (sched_policy == 0) {
+      acquire(&ptable.lock);
+      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        if(p->state != RUNNABLE)
+          continue;
 
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
+        // Switch to chosen process.  It is the process's job
+        // to release ptable.lock and then reacquire it
+        // before jumping back to us.
+        c->proc = p;
+        switchuvm(p);
+        p->state = RUNNING;
 
-      swtch(&(c->scheduler), p->context);
-      switchkvm();
+        swtch(&(c->scheduler), p->context);
+        switchkvm();
 
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      c->proc = 0;
+        // Process is done running for now.
+        // It should have changed its p->state before coming back.
+        c->proc = 0;
+      }
+      release(&ptable.lock);
     }
-    release(&ptable.lock);
+    // Policy 1: EDF, Policy 2: EDF with donation (same scheduling logic for now)
+    else {
+      acquire(&ptable.lock);
+      struct proc *best = 0;
+      
+      // Scan all NPROC slots choosing best among RUNNABLE
+      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        if(p->state != RUNNABLE)
+          continue;
+        
+        if (best == 0) {
+          best = p;
+        } else {
+          uint eff_p = effective(p);
+          uint eff_best = effective(best);
+          
+          // Better if dl_before(effective(p), effective(best))
+          if (dl_before(eff_p, eff_best)) {
+            best = p;
+          }
+          // Equal effective deadlines: tie-break on least-recently-run
+          // Use < (not <=) to avoid index starvation
+          else if (eff_p == eff_best && p->last_run < best->last_run) {
+            best = p;
+          }
+        }
+      }
+      
+      if (best) {
+        best->last_run = ++runcounter;
+        
+        // Switch to chosen process
+        c->proc = best;
+        switchuvm(best);
+        best->state = RUNNING;
 
+        swtch(&(c->scheduler), best->context);
+        switchkvm();
+
+        // Process is done running for now.
+        c->proc = 0;
+      }
+      release(&ptable.lock);
+    }
   }
 }
 

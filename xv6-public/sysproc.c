@@ -6,6 +6,8 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
+#include "sched_params.h"
+#include "sched_api.h"
 
 int
 sys_fork(void)
@@ -106,4 +108,45 @@ sys_add(void)
   if(argint(0, &a) < 0 || argint(1, &b) < 0)
     return -1;
   return a + b;
+}
+
+// Stage 2: setsched - set scheduling policy
+// policy: 0=rr, 1=edf, 2=edf_donate
+int
+sys_setsched(void)
+{
+  int policy;
+  if(argint(0, &policy) < 0)
+    return -1;
+  if(policy < 0 || policy > 2)
+    return -1;
+  sched_policy = policy;
+  return 0;
+}
+
+// Stage 2: setworkflow - assign process to workflow with deadline
+// wid: workflow ID (1..NWF-1)
+// deadline: relative deadline in ticks
+int
+sys_setworkflow(void)
+{
+  int wid;
+  int deadline;
+  
+  if(argint(0, &wid) < 0 || argint(1, &deadline) < 0)
+    return -1;
+  
+  return sys_setworkflow_impl(wid, deadline);
+}
+
+// Stage 2: schedinfo - get scheduler statistics
+int
+sys_schedinfo(void)
+{
+  struct sched_stats *stats;
+  
+  if(argptr(0, (char**)&stats, sizeof(struct sched_stats)) < 0)
+    return -1;
+  
+  return sys_schedinfo_impl(stats);
 }
