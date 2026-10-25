@@ -10,4 +10,5 @@
 | What happens if a process calls `setworkflow` twice? | The second call returns `-1` immediately. A process can only join one workflow for its lifetime. This simplifies accounting and prevents deadline manipulation. |
 | How does `fork()` handle scheduling fields? | The child inherits `wid` and `deadline` from the parent, but `donated` is reset to `NO_DEADLINE` (donations are not inherited), `last_run` and `missed` are reset to 0. |
 | Why does `schedctl` use `setsched` syscall instead of writing to a file? | Syscalls are the xv6 mechanism for kernel interaction. A syscall ensures atomic policy change and proper privilege checking. |
+| Why is the Python validator not the security boundary? | It runs outside xv6 and can be bypassed, replaced, or buggy. It reduces accidental and prompt-injection traffic, but the kernel must independently enforce admission, scheduling, and resource limits. |
 

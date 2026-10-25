@@ -13,3 +13,7 @@ user/_*
 host/logs/*.raw
 host/logs/*.jsonl
 harness/*.csv
+
+# Python caches
+__pycache__/
+*.py[cod]

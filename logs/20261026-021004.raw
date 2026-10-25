@@ -1,0 +1,51 @@
+qemu-system-i386 -nographic -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,index=0,media=disk,format=raw -smp 1 -m 512 
+c[?7l[2J[0mSeaBIOS (version 1.16.3-debian-1.16.3-2)
+
+
+iPXE (https://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+1EFC7F60+1EF07F60 CA00
+Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
+
+
+Booting from Hard Disk..xv6...
+cpu0: starting 0
+sb: size 4000 nblocks 3941 ninodes 200 nlog 30 logstart 2 inodestart 32 bmap start 58
+init: starting sh
+$ xrun 7a0d2900 stage3_missing_program
+exec: fail
+@@EXECFAIL 7a0d2900
+@@DONE 7a0d2900
+$ xrun 87d61077 ls
+.              1 1 512
+..             1 1 512
+README         2 2 2286
+report.txt     2 3 129
+inbox.txt      2 4 109
+cat            2 5 16248
+echo           2 6 15136
+forktest       2 7 9192
+grep           2 8 19096
+init           2 9 15748
+kill           2 10 15216
+ln             2 11 15080
+ls             2 12 17732
+mkdir          2 13 15212
+rm             2 14 15192
+sh             2 15 29236
+stressfs       2 16 16036
+usertests      2 17 63924
+wc             2 18 16544
+zombie         2 19 14776
+mytest         2 20 14908
+hello_test     2 21 15016
+ticktest       2 22 15088
+add_test       2 23 15236
+schedctl       2 24 15548
+schedstat      2 25 15416
+edftest        2 26 18736
+test_negative  2 27 15856
+xrun           2 28 15320
+wfgen          2 29 14760
+console        3 30 0
+@@DONE 87d61077
+$ QEMU: Terminated
+

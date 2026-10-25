@@ -10,8 +10,8 @@ The scheduler supports three policies selectable at runtime via `setsched()`:
   Effective deadline is the more urgent of the process's own deadline and any
   donated deadline. Deadlines are compared with `dl_before(a,b)` using signed
   subtraction to handle 32-bit `ticks` wrap-around correctly.
-- **EDF+Donate (2)**: Same as EDF for Stage 2; priority donation will be
-  implemented in Stage 3.
+- **EDF+Donate (2)**: Same as EDF for Stage 2; priority donation is planned
+  for the later kernel/donation stages and is not implemented here.
 
 Processes join workflows via `setworkflow(wid, relative_deadline)`. The first
 caller of a workflow ID establishes the absolute deadline as `now_ticks() +
