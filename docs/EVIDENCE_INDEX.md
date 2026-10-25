@@ -8,12 +8,9 @@
 | `logs/T-02-ping.out` | T-02 | Host-side printed `ls` result, including `README`, `hello_test`, and `ticktest`. |
 | `logs/T-03-ticktest.raw` | T-03 | Tick output and stopwatch measurement. |
 | `logs/T-04-usertests.raw` | T-04 | Post-`FSSIZE` usertests output containing `ALL TESTS PASSED`. |
-| `logs/T-06-edftest.raw` | T-06 | EDF scheduler: child A (deadline 100) finished at tick 1370, child B (deadline 200) at 1423. |
-| `logs/T-07-edftest.raw` | T-07 | RR scheduler: both children finished at tick 7191. |
-| `logs/T-08-usertests.raw` | T-08 | EDF + usertests: ALL TESTS PASSED. |
-| `logs/T-09-usertests.raw` | T-09 | RR + usertests: ALL TESTS PASSED. |
-| `logs/T-10-usertests.raw` | T-10 | EDF_Donate + usertests: ALL TESTS PASSED. |
-| `logs/T-11-negative.raw` | T-11 | setsched(7) returns -1. |
-| `logs/T-12-negative.raw` | T-12 | setworkflow(1,0)=-1, second call=-1. |
-| `logs/T-13-cpus3.raw` | T-13 | Boot with CPUS=3: no panic, 3 CPUs started. |
-
+| `logs/20261025-211404.raw` | T-06, T-11, T-12 | EDF run: child A (deadline 100) finished at tick 250 before child B (deadline 200) at tick 458; the same session records `setsched(7) = -1`, `setworkflow(1,0) = -1`, and the second `setworkflow` call returning `-1`. |
+| `logs/20261025-212038.raw` | T-07 | RR run: child B finished at tick 532 and child A at tick 534. |
+| `logs/20261025-211715.raw` | T-08 | EDF + usertests: `ALL TESTS PASSED`. |
+| `logs/20261025-211536.raw` | T-09 | RR + usertests: `ALL TESTS PASSED`. |
+| `logs/20261025-211846.raw` | T-10 | EDF_Donate + usertests: `ALL TESTS PASSED`. |
+| `logs/20261025-212854.raw` | T-13 | Three-CPU QEMU bridge session completed and was terminated without a panic being observed. |
