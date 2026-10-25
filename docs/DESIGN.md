@@ -56,6 +56,44 @@ carriage returns from `run_raw()` results. Guest command lines must be fewer
 than 90 characters. The bridge uses a 120-second startup timeout and a
 per-command timeout of 15 seconds by default.
 
+## Stage 3: Agent trust boundaries
+
+The planner proposes a structured tool call; it is not trusted input. The
+validator checks the tool name, exact argument set, types, allowlist, and
+configured bounds. The bridge accepts only validated values and expands them
+through fixed command templates, so planner text is never typed as a guest
+command. The kernel remains the final enforcement point for scheduling and
+admission policy; a Python validator is a convenience boundary, not a security
+boundary.
+
+| Tool | Guest template | Policy |
+|---|---|---|
+| `list_files()` | `ls` | no arguments |
+| `read_file(path)` | `cat <validated path>` | xv6-safe name and config allowlist |
+| `set_policy(policy)` | `schedctl <validated enum>` | `rr`, `edf`, or `edf_donate` |
+| `run_pipeline(...)` | `wfgen <validated integers>` | configured stage, slack, work, bytes, and hog bounds |
+| `sched_stats()` | `schedstat` | no arguments |
+| `summarize(text)` | host only | no guest effect |
+
+## Stage 3: Sentinel protocol
+
+The bridge sends `xrun <random nonce> <fixed command>`. `xrun` prints
+`@@EXECFAIL <nonce>` when `exec` fails and prints `@@DONE <nonce>` after the
+child has been waited for. The bridge verifies the echoed command and the
+matching nonce, then waits for the next shell prompt. A panic, killed process,
+or timeout is recorded as a non-success and causes a restart; completion is
+never inferred from a timeout.
+
+The session transcript is retained, and each `run()` invocation also tees
+received console data into a unique `logs/*.run.raw` file for per-command
+evidence.
+
+`@@DONE` means that the guest process was reaped, not that its command was
+semantically successful. The host marks known tool-level error output such as
+`cat: cannot open ...` as `error` in the observation and audit record.
+Audit records include `execution_source` (`qemu` or `fake`) so unit-test
+evidence cannot be mistaken for serial-console evidence.
+
 ## Stage 2: Scheduler
 
 ### Overview

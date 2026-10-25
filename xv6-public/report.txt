@@ -1,0 +1,3 @@
+Project 3 progress report.
+The EDF scheduler selects processes by deadline.
+The Python agent communicates with xv6 through QEMU.

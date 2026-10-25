@@ -1,0 +1,48 @@
+qemu-system-i386 -nographic -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,index=0,media=disk,format=raw -smp 1 -m 512 
+c[?7l[2J[0mSeaBIOS (version 1.16.3-debian-1.16.3-2)
+
+
+iPXE (https://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+1EFC7F60+1EF07F60 CA00
+Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
+
+
+Booting from Hard Disk..xv6...
+cpu0: starting 0
+sb: size 4000 nblocks 3941 ninodes 200 nlog 30 logstart 2 inodestart 32 bmap start 58
+init: starting sh
+$ xrun 3cb980e0 ls
+.              1 1 512
+..             1 1 512
+README         2 2 2286
+cat            2 3 16248
+echo           2 4 15136
+forktest       2 5 9192
+grep           2 6 19096
+init           2 7 15748
+kill           2 8 15216
+ln             2 9 15080
+ls             2 10 17732
+mkdir          2 11 15212
+rm             2 12 15192
+sh             2 13 29236
+stressfs       2 14 16036
+usertests      2 15 63924
+wc             2 16 16544
+zombie         2 17 14776
+mytest         2 18 14908
+hello_test     2 19 15016
+ticktest       2 20 15088
+add_test       2 21 15236
+schedctl       2 22 15548
+schedstat      2 23 15416
+edftest        2 24 18736
+test_negative  2 25 15856
+xrun           2 26 15320
+wfgen          2 27 14760
+console        3 28 0
+@@DONE 3cb980e0
+$ xrun ec170ce3 cat /report.txt
+cat: cannot open /report.txt
+@@DONE ec170ce3
+$ QEMU: Terminated
+

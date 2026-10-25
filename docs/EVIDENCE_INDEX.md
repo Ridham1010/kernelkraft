@@ -8,9 +8,20 @@
 | `logs/T-02-ping.out` | T-02 | Host-side printed `ls` result, including `README`, `hello_test`, and `ticktest`. |
 | `logs/T-03-ticktest.raw` | T-03 | Tick output and stopwatch measurement. |
 | `logs/T-04-usertests.raw` | T-04 | Post-`FSSIZE` usertests output containing `ALL TESTS PASSED`. |
-| `logs/20261025-211404.raw` | T-06, T-11, T-12 | EDF run: child A (deadline 100) finished at tick 250 before child B (deadline 200) at tick 458; the same session records `setsched(7) = -1`, `setworkflow(1,0) = -1`, and the second `setworkflow` call returning `-1`. |
-| `logs/20261025-212038.raw` | T-07 | RR run: child B finished at tick 532 and child A at tick 534. |
-| `logs/20261025-211715.raw` | T-08 | EDF + usertests: `ALL TESTS PASSED`. |
-| `logs/20261025-211536.raw` | T-09 | RR + usertests: `ALL TESTS PASSED`. |
-| `logs/20261025-211846.raw` | T-10 | EDF_Donate + usertests: `ALL TESTS PASSED`. |
-| `logs/20261025-212854.raw` | T-13 | Three-CPU QEMU bridge session completed and was terminated without a panic being observed. |
+| `Unavailable: logs/20261025-211404.raw` | T-06, T-11, T-12 | Historical Stage 2 observations remain recorded in `TEST_TABLE.md`, but this raw log is not present in the current checkout. |
+| `Unavailable: logs/20261025-212038.raw` | T-07 | Historical Stage 2 observation remains recorded in `TEST_TABLE.md`, but this raw log is not present in the current checkout. |
+| `Unavailable: logs/20261025-211715.raw` | T-08 | Historical Stage 2 observation remains recorded in `TEST_TABLE.md`, but this raw log is not present in the current checkout. |
+| `Unavailable: logs/20261025-211536.raw` | T-09 | Historical Stage 2 observation remains recorded in `TEST_TABLE.md`, but this raw log is not present in the current checkout. |
+| `Unavailable: logs/20261025-211846.raw` | T-10 | Historical Stage 2 observation remains recorded in `TEST_TABLE.md`, but this raw log is not present in the current checkout. |
+| `Unavailable: logs/20261025-212854.raw` | T-13 | Historical Stage 2 observation remains recorded in `TEST_TABLE.md`, but this raw log is not present in the current checkout. |
+| `logs/20261026-022527.raw` | T-05 | Temporary real-QEMU negative run after removing only `_hello_test`: `hello_test` was unavailable, but xv6 printed `exec: fail` and `exec hello_test failed`, not the specified literal `hello_test: not found`; `ls` also omitted `hello_test`. |
+| `logs/20261026-022603.raw` | T-05 restoration check | Real-QEMU run after restoring the exact Makefile and rebuilding: `hello_test` printed `hello from kernel` and `hello() returned 0`. |
+| `logs/audit.jsonl` records 1-3 | T-15 through T-21 | Fake-bridge smoke records from the earlier host-loop test; these are not QEMU evidence. |
+| `logs/audit.jsonl` records 4-5 | Earlier T-14 attempt | Earlier real-QEMU attempt where `cat /report.txt` completed with `cat: cannot open /report.txt`; not the successful T-14 evidence. |
+| `logs/20261026-014457.raw` | Earlier T-14 attempt | Earlier real serial-console transcript showing the missing-file attempt; not the successful T-14 evidence. |
+| `logs/audit.jsonl` records 6-7 | T-14 | Real-QEMU audit records: `ls` output includes `report.txt`, and `read_file` output contains all three report lines. |
+| `logs/20261026-020550.raw` | T-14 | Successful real serial-console transcript showing the listing, the three `report.txt` contents, and matching `@@DONE` sentinels. |
+| `logs/20261026-021004.raw` | T-23 | Real QEMU run: nonexistent `stage3_missing_program` produced `@@EXECFAIL` followed by `@@DONE`; a subsequent `ls` completed with `@@DONE` and returned `README`. |
+| `logs/20261026-021019.raw` | T-22 | Real QEMU run: `xrun ... cat` blocked on console input until the one-second bridge timeout; the session was terminated during restart. |
+| `logs/20261026-021021.raw` | T-22 | Fresh QEMU session after timeout recovery; `ls` completed with `@@DONE` and returned `README`. |
+| `host/tests/test_validator.py` | T-15 through T-21 and T-24 | Pytest coverage for unknown-tool rejection before bridge calls, invalid paths and allowlist, deadline and hog bounds, malformed arguments, bool-as-int rejection, per-run logging, CPU-preserving restart, and the full 17-test suite. |
