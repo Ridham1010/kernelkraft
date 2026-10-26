@@ -33,6 +33,8 @@ pinit(void)
 // Stage 2: scheduling policy globals
 int sched_policy = 0;  // 0=rr, 1=edf, 2=edf_donate
 uint runcounter = 0;   // Monotonic counter for tie-breaking
+static int global_misses;
+static int global_rejected;
 
 // Stage 2: workflows table
 struct workflow {
@@ -67,19 +69,60 @@ dl_before(uint a, uint b)
 static uint
 effective(struct proc *p)
 {
+  if (p->missed)
+    return NO_DEADLINE;
   uint d = p->deadline;
   if (p->donated != NO_DEADLINE && dl_before(p->donated, d))
     return p->donated;
   return d;
 }
 
-// Stage 2: Admission check stub - always returns 0 (success) for now
-// Not static - called from sysproc.c
+// Admission runs under ptable.lock and reports after releasing it.
 int
 admission_check_locked(struct proc *p, int wid, uint deadline)
 {
-  // Stub for Stage 2 - donation logic will be added in Stage 3
-  return 0;
+  struct proc *q;
+  int urgent = 0;
+  char *reason = 0;
+
+  if (deadline < MIN_SLACK) {
+    reason = "slack";
+  } else {
+    for (q = ptable.proc; q < &ptable.proc[NPROC]; q++) {
+      if (q->state != UNUSED && q->state != ZOMBIE &&
+          q->deadline != NO_DEADLINE)
+        urgent++;
+    }
+    if (urgent >= MAX_URGENT)
+      reason = "urgent";
+  }
+  if (reason == 0)
+    return 0;
+
+  if (wid > 0 && wid < NWF && workflows[wid].wid == wid)
+    workflows[wid].rejected++;
+  global_rejected++;
+  release(&ptable.lock);
+  cprintf("admit: rejected pid=%d wid=%d deadline=%d reason=%s\n",
+          p->pid, wid, deadline, reason);
+  return -1;
+}
+
+static void
+mark_missed_locked(struct proc *p)
+{
+  struct workflow *w;
+
+  if (p->missed || p->deadline == NO_DEADLINE ||
+      (int)(now_ticks() - p->deadline) <= 0)
+    return;
+  p->missed = 1;
+  global_misses++;
+  if (p->wid > 0 && p->wid < NWF) {
+    w = &workflows[p->wid];
+    if (w->wid == p->wid)
+      w->misses++;
+  }
 }
 
 // Stage 2: Workflow leave helper - called from exit() with ptable.lock held
@@ -167,6 +210,7 @@ sys_setworkflow_impl(int wid, int deadline)
     // Workflow exists - check if deadline matches
     if(w->abs_deadline != now + deadline) {
       w->rejected++;
+      global_rejected++;
       release(&ptable.lock);
       return -1;
     }
@@ -182,8 +226,7 @@ sys_setworkflow_impl(int wid, int deadline)
   
   // Admission check (stub for now)
   if(admission_check_locked(curproc, wid, deadline) < 0) {
-    w->rejected++;
-    release(&ptable.lock);
+    // admission_check_locked releases ptable.lock after logging rejection.
     return -1;
   }
   
@@ -204,10 +247,10 @@ sys_schedinfo_impl(struct sched_stats *stats)
   stats->policy = sched_policy;
   stats->ncpu = ncpu;
   stats->ticks = now_ticks();
-  stats->misses = workflow_misses();
+  stats->misses = global_misses;
   stats->donations = 0;
   stats->cycles = runcounter;
-  stats->rejected = workflow_rejected();
+  stats->rejected = global_rejected;
   
   return 0;
 }
@@ -451,6 +494,7 @@ exit(void)
 
   acquire(&ptable.lock);
 
+  mark_missed_locked(curproc);
   // Stage 2: Leave workflow if part of one
   wf_leave_locked(curproc);
 
@@ -538,6 +582,9 @@ scheduler(void)
     // Policy 0: Original round-robin scheduler (unchanged)
     if (sched_policy == 0) {
       acquire(&ptable.lock);
+      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+        if(p->state != UNUSED)
+          mark_missed_locked(p);
       for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
         if(p->state != RUNNABLE)
           continue;
@@ -563,6 +610,10 @@ scheduler(void)
       acquire(&ptable.lock);
       struct proc *best = 0;
       
+      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+        if(p->state != UNUSED)
+          mark_missed_locked(p);
+
       // Scan all NPROC slots choosing best among RUNNABLE
       for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
         if(p->state != RUNNABLE)

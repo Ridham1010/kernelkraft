@@ -28,9 +28,15 @@ the current policy. The tie-break on equal effective deadlines uses
 
 ## Security
 
+Stage 4 has two enforcement layers. The Python validator rejects malformed,
+disallowed, or out-of-range planner actions before they become QEMU commands.
+The kernel admission check is the security boundary: it independently enforces
+`MIN_SLACK` and `MAX_URGENT`, records rejection, and emits an admission
+diagnostic after releasing `ptable.lock`. The second layer matters because a
+user can bypass the host agent and type a command directly at the xv6 shell.
+
 ## Results
 
 ## Problems
 
 ## Limits
-

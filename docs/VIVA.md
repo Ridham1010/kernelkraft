@@ -11,4 +11,4 @@
 | How does `fork()` handle scheduling fields? | The child inherits `wid` and `deadline` from the parent, but `donated` is reset to `NO_DEADLINE` (donations are not inherited), `last_run` and `missed` are reset to 0. |
 | Why does `schedctl` use `setsched` syscall instead of writing to a file? | Syscalls are the xv6 mechanism for kernel interaction. A syscall ensures atomic policy change and proper privilege checking. |
 | Why is the Python validator not the security boundary? | It runs outside xv6 and can be bypassed, replaced, or buggy. It reduces accidental and prompt-injection traffic, but the kernel must independently enforce admission, scheduling, and resource limits. |
-
+| What happens if the host validator is bypassed? | A direct xv6 command still passes through kernel admission control. The kernel rejects deadlines below `MIN_SLACK` and urgent-process counts above `MAX_URGENT`, updates counters, and logs the rejection after releasing `ptable.lock`. |

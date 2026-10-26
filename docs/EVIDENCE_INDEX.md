@@ -25,3 +25,7 @@
 | `logs/20261026-021019.raw` | T-22 | Real QEMU run: `xrun ... cat` blocked on console input until the one-second bridge timeout; the session was terminated during restart. |
 | `logs/20261026-021021.raw` | T-22 | Fresh QEMU session after timeout recovery; `ls` completed with `@@DONE` and returned `README`. |
 | `host/tests/test_validator.py` | T-15 through T-21 and T-24 | Pytest coverage for unknown-tool rejection before bridge calls, invalid paths and allowlist, deadline and hog bounds, malformed arguments, bool-as-int rejection, per-run logging, CPU-preserving restart, and the full 17-test suite. |
+| `logs/20261026-220615.raw` | T-25 and T-28 | Stage 4 benign agent/manual workflow output with a successful `RESULT` line. |
+| `logs/audit.jsonl` latest records | T-26 | Injected `/inbox.txt` scenario: the proposed deadline-1 pipeline was rejected by the host validator before guest execution. |
+| `logs/T-27-stage4.raw` | T-27 | Manual shell bypass capture showing `admit: rejected ... reason=slack` and `wfgen: workflow rejected by kernel`. |
+| console captures from Stage 4 runs | T-30 through T-32 | Overdue workflow reported `miss=1`; fresh-filesystem usertests passed under all three policies; CPUS=3 workflow completed without panic. |

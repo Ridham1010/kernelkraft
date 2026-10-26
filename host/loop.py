@@ -10,6 +10,20 @@ except ImportError:
     from validator import ValidationError, validate_action
 
 
+def _result_fields(output):
+    fields = {}
+    for token in output.split():
+        if "=" not in token:
+            continue
+        key, value = token.split("=", 1)
+        if key in ("policy", "cpus", "finish", "deadline", "miss"):
+            try:
+                fields[key] = int(value)
+            except ValueError:
+                return None
+    return fields if len(fields) == 5 else None
+
+
 class AgentLoop:
     def __init__(self, bridge, planner, config=None, audit=None, max_steps=8, execution_source="unknown"):
         self.bridge = bridge
@@ -56,11 +70,16 @@ class AgentLoop:
             state["actions"].append(validated)
             if validated["tool"] == "read_file":
                 state["read_paths"].append(validated["args"]["path"])
-            state["observations"].append({
+            observation_record = {
                 "tool": validated["tool"],
                 "status": status,
                 "output": output,
-            })
+            }
+            if output.startswith("RESULT "):
+                result = _result_fields(output)
+                if result is not None:
+                    observation_record["result"] = result
+            state["observations"].append(observation_record)
             self.audit.write({
                 "user_request": request,
                 "proposed_call": proposed,

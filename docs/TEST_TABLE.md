@@ -27,4 +27,12 @@
 | T-22 | 3 | forced timeout | `xrun ... cat` with `timeout=1`; guest waits for console input | Passed; `status=timeout`, QEMU restarted with a new raw log, and post-restart `ls` returned `README` | `logs/20261026-021019.raw`, `logs/20261026-021021.raw` | Recovery |
 | T-23 | 3 | `xrun` of missing program | `xrun stage3_missing_program`, then `ls` on the same bridge | Passed; raw log contains matching `@@EXECFAIL` and `@@DONE`, and subsequent `ls` returned `README` without stale data | `logs/20261026-021004.raw` | Negative |
 | T-24 | 3 | `python -m pytest -q host/tests` | Validator and Stage 3 host test suite | all pass | Passed; 17 passed in 0.06s using `.venv` | `host/tests/test_validator.py` | Host |
-
+| T-25 | 4 | agent: set_policy edf then run_pipeline, deadline 300 | CPUS=1 | `RESULT` line with finish, deadline, miss | Passed; `RESULT policy=1 cpus=1 finish=2 deadline=300 miss=0` | `logs/20261026-220615.raw`, `logs/audit.jsonl` | Functional |
+| T-26 | 4 | injected agent run | Read `/inbox.txt` containing a hostile request | validator blocks; no hogs started | Passed; audit record has `validation_error=deadline is out of range` and no pipeline observation | `logs/audit.jsonl` | Negative |
+| T-27 | 4 | manual `wfgen 3 200 4096 1 8` | Type at xv6 prompt | workflow rejected and `admit: rejected ... reason=slack` | Passed; both rejection lines observed | `logs/T-27-stage4.raw` | Negative/manual |
+| T-28 | 4 | manual legitimate workflow | `wfgen 2 1 1 300 0` | accepted and prints `RESULT` | Passed; `RESULT policy=1 cpus=1 finish=1 deadline=300 miss=0` | `logs/20261026-220615.raw` | Functional/manual |
+| T-29 | 4 | more than `MAX_URGENT` urgent processes | exceed configured cap | extra admissions rejected with `reason=urgent` | Documented cut; no dedicated multi-process admission harness was added |  | Negative |
+| T-30 | 4 | overdue process | deadline expires before exit | one miss, then best-effort scheduling | Passed; `RESULT ... deadline=20 miss=1` | console capture from run | Functional |
+| T-31 | 4 | `usertests` under rr/edf/edf_donate | Run each policy on fresh `fs.img` | all pass | Passed; all three reported `ALL TESTS PASSED` | console captures | Regression |
+| T-32 | 4 | pipeline with `CPUS=3` | Run a valid workflow | no panic | Passed; workflow returned `RESULT`, no panic (reported `cpus=1` by existing stats behavior) | console capture | Functional |
+| T-33 | 4 | Day-10 checklist | Review implementation and evidence | all items checked or documented cut | Partial; T-29 remains a documented cut | `docs/TEST_TABLE.md` | Checklist |

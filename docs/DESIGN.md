@@ -94,6 +94,23 @@ semantically successful. The host marks known tool-level error output such as
 Audit records include `execution_source` (`qemu` or `fake`) so unit-test
 evidence cannot be mistaken for serial-console evidence.
 
+## Stage 4: Admission control and firm deadlines
+
+The kernel is the second enforcement layer. `setworkflow` checks the relative
+deadline against `MIN_SLACK` and counts live finite-deadline processes before
+accepting another urgent process. Rejection updates workflow and global
+counters, releases `ptable.lock`, and only then emits the `admit: rejected`
+diagnostic. The scheduler marks each overdue finite-deadline process once;
+missed processes use `NO_DEADLINE` for EDF selection, so late work becomes
+best-effort. `exit` performs the same check before removing a process from its
+workflow.
+
+The injection demonstration has two layers: the host validator rejects the
+deadline-1/8-hog proposal before QEMU traffic, while a user who bypasses the
+host can type `wfgen 3 200 4096 1 8` at the xv6 prompt and reach kernel
+admission control. The latter is the security boundary because the host is
+outside the guest.
+
 ## Stage 2: Scheduler
 
 ### Overview
