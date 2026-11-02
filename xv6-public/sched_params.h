@@ -8,3 +8,4 @@
 #define NWF 8
 #define TRACE_SIZE 256
 #define MAX_HOGS 8
+#define DONATION_TEST_DEADLINE 300

@@ -7,4 +7,5 @@
 | 24 | `setsched` | `int setsched(int policy)` | `0` on success, `-1` on error | Sets scheduling policy: 0=RR (original), 1=EDF, 2=EDF with donation (stub). Updates global `sched_policy`. Returns `-1` if policy not in 0..2. |
 | 25 | `setworkflow` | `int setworkflow(int wid, int deadline)` | `0` on success, `-1` on error | Assigns process to workflow `wid` (1..NWF-1) with relative `deadline` (ticks). First caller sets absolute deadline = `now_ticks() + deadline`. Subsequent callers must match. Rejects if `wid<=0`, `wid>=NWF`, `deadline<=0`, or process already has a workflow. Returns `-1` on error. |
 | 26 | `schedinfo` | `int schedinfo(struct sched_stats *stats)` | `0` on success, `-1` on error | Fills `stats` with current scheduler statistics: policy, ncpu, ticks, misses, donations, cycles, rejected. Returns `-1` if user pointer invalid. |
-
+| 27 | `tracectl` | `int tracectl(int command)` | `0` on success, `-1` on error | Command 4 enables deferred pipe-donation diagnostics; command 5 disables them. |
+| 28 | `procinfo` | `int procinfo(int pid, struct procstat *dst)` | `0` on success, `-1` if pid is not found or the pointer is invalid | Copies state, own deadline, donated deadline, and whether the process is waiting on a pipe. |

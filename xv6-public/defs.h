@@ -103,6 +103,8 @@ int             pipealloc(struct file**, struct file**);
 void            pipeclose(struct pipe*, int);
 int             piperead(struct pipe*, char*, int);
 int             pipewrite(struct pipe*, char*, int);
+void            pipe_wait_begin(struct pipe*);
+void            pipe_wait_end(void);
 
 //PAGEBREAK: 16
 // proc.c
@@ -136,6 +138,8 @@ int             workflow_rejected(void);
 // Stage 2: syscall implementations
 int             sys_setworkflow_impl(int wid, int deadline);
 int             sys_schedinfo_impl(struct sched_stats *stats);
+int             sys_procinfo_impl(int pid, struct procstat *stat);
+int             sys_tracectl_impl(int command);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
@@ -204,4 +208,3 @@ void            clearpteu(pde_t *pgdir, char *uva);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
-

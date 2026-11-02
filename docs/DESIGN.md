@@ -113,12 +113,48 @@ outside the guest.
 
 ## Stage 2: Scheduler
 
+## Stage 5: Pipe donation
+
+Only policy 2 enables donation. A process is an over-approximate holder of a
+pipe when a non-UNUSED process has an open writable `FD_PIPE` for that pipe in
+its descriptor table. The scan intentionally reads `ofile` without another
+lock; this is a documented benign race in the xv6 process model.
+
+Immediately before a blocked `piperead()` sleeps, `pipe_wait_begin()` records
+the process's `waiting_pipe` and, when it has a finite effective deadline,
+performs an iterative DFS. Each frame contains a process, the propagated
+deadline, and the next process-table slot to inspect. A white holder is
+descended into, a black holder is skipped, and a gray holder records one cycle
+event without descending. Both the explicit stack and traversal depth are
+bounded by `NPROC`. `pipe_wait_end()` clears `waiting_pipe` and runs the
+fixpoint recomputation.
+
+Recomputation first clears all donated deadlines, then makes at most `NPROC+1`
+monotone passes over waiting readers and writable holders. This withdraws
+donations when a reader is killed or wakes while preserving donations from
+other readers. `exit()` clears the exiting process's wait edge and invokes the
+same recomputation while holding `ptable.lock`.
+
+The lock path for the donation hook is `pipe->lock -> ptable.lock`: the pipe
+lock is held by `piperead()` when the hook starts, and the hook acquires and
+releases `ptable.lock` internally. No donation path acquires a pipe lock,
+`cons.lock`, or `tickslock` while holding `ptable.lock`; diagnostics are stored
+as small events and printed only after releasing it. `ticks` is read through
+the existing unlocked, aligned read, and deadlines use wrap-safe signed
+subtraction. A descriptor-table scan is used rather than a writer pointer
+because shell-created descriptors can be duplicated and the pointer would be
+unset or stale at a block boundary.
+
+The empty donation sentinel requires an explicit check: because
+`NO_DEADLINE` is `0xffffffff`, `dl_before(dl, NO_DEADLINE)` is not a valid
+way to recognize an unset donation under modular subtraction.
+
 ### Overview
 
 Stage 2 introduces a runtime-switchable scheduler with three policies:
 - **Policy 0 (RR):** Original round-robin scheduler (unchanged)
 - **Policy 1 (EDF):** Earliest Deadline First scheduling
-- **Policy 2 (EDF+Donate):** EDF with priority donation (stubbed for Stage 3)
+- **Policy 2 (EDF+Donate):** EDF with pipe priority donation
 
 The scheduler policy is controlled via the `setsched(int)` system call (syscall 24).
 The current policy and statistics can be queried via `schedinfo()` (syscall 26).
@@ -232,5 +268,5 @@ the scheduler already holds `ptable.lock` and we must never acquire
 - `ticks`: Current tick count (via `now_ticks()`)
 - `misses`: Sum of `workflow.misses` across all workflows
 - `donations`: Number of priority donations (0 in Stage 2)
-- `cycles`: Scheduling cycle counter (`runcounter`)
+- `cycles`: Pipe-donation cycle counter
 - `rejected`: Sum of `workflow.rejected` across all workflows

@@ -1,0 +1,11 @@
+0x0000fff0 in ?? ()
+Breakpoint 1 at 0x801046c0: file proc.c, line 813.
+
+Breakpoint 1, scheduler () at proc.c:813
+813	  struct cpu *c = mycpu();
+#0  scheduler () at proc.c:813
+#1  0x8010300f in mpmain () at main.c:57
+#2  0x8010315c in main () at main.c:37
+  Id   Target Id                    Frame
+* 1    Thread 1.1 (CPU#0 [running]) scheduler () at proc.c:813
+[Inferior 1 (process 1) detached]

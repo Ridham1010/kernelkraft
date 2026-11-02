@@ -14,4 +14,11 @@ struct sched_stats {
   int rejected;    // Number of rejected workflow admissions
 };
 
+struct procstat {
+  int state;
+  uint deadline;
+  uint donated;
+  int waiting;
+};
+
 #endif // SCHED_API_H

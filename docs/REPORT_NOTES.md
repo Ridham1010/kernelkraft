@@ -24,7 +24,28 @@ the current policy. The tie-break on equal effective deadlines uses
 
 ## Locking
 
+The existing global order is `tickslock -> ptable.lock`,
+`cons.lock -> ptable.lock`, and `pipe->lock -> ptable.lock` through
+`sleep()`. Donation hooks follow only the last order: `piperead()` already
+holds the pipe lock, then `pipe_wait_begin/end()` acquire and release
+`ptable.lock`. They never acquire a pipe lock, `cons.lock`, or `tickslock`
+under `ptable.lock`; event records defer `cprintf()` until after release.
+The scheduler's unlocked 32-bit `ticks` read is atomic on x86.
+
 ## Donation and proofs
+
+The DFS uses an explicit stack and white/gray/black colours, so every
+reachable process is bounded by `NPROC`; a gray edge reports a cycle and is
+not followed. Recompute terminates because each of its finite `NPROC+1`
+rounds only makes deadlines more urgent, and the finite deadline set reaches
+a fixed point. On the next invocation it resets and recomputes from current
+wait edges, which withdraws stale donations. A scan beats a writer pointer:
+the shell can duplicate pipe descriptors, the pointer is unavailable at the
+first block, and ownership can change as descriptors close.
+
+The empty donation sentinel is checked explicitly because
+`dl_before(dl, NO_DEADLINE)` is false for ordinary deadlines when
+`NO_DEADLINE` is `0xffffffff`.
 
 ## Security
 

@@ -34,4 +34,5 @@ SYSCALL(add)
 SYSCALL(setsched)
 SYSCALL(setworkflow)
 SYSCALL(schedinfo)
-
+SYSCALL(tracectl)
+SYSCALL(procinfo)

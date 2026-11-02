@@ -25,4 +25,5 @@
 #define SYS_setsched  24
 #define SYS_setworkflow  25
 #define SYS_schedinfo  26
-
+#define SYS_tracectl   27
+#define SYS_procinfo   28

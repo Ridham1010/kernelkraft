@@ -6,6 +6,9 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "fs.h"
+#include "sleeplock.h"
+#include "file.h"
 #include "sched_params.h"
 #include "sched_api.h"
 
@@ -35,6 +38,21 @@ int sched_policy = 0;  // 0=rr, 1=edf, 2=edf_donate
 uint runcounter = 0;   // Monotonic counter for tie-breaking
 static int global_misses;
 static int global_rejected;
+static int global_donations;
+static int global_cycles;
+static int donation_debug;
+static int cycle_reported;
+
+struct donation_event {
+  int kind;
+  int donor;
+  int receiver;
+  uint deadline;
+};
+
+#define DONATE_EVENT 1
+#define CYCLE_EVENT 2
+#define DONATION_EVENT_MAX (NPROC * 2)
 
 // Stage 2: workflows table
 struct workflow {
@@ -75,6 +93,190 @@ effective(struct proc *p)
   if (p->donated != NO_DEADLINE && dl_before(p->donated, d))
     return p->donated;
   return d;
+}
+
+static int
+holds_write_end(struct proc *q, struct pipe *pi)
+{
+  int i;
+
+  if(q->state == UNUSED)
+    return 0;
+  /*
+   * ofile is read without file locks while ptable.lock is held.  This is a
+   * known benign race: descriptors are only closed by their owning process.
+   */
+  for(i = 0; i < NOFILE; i++)
+    if(q->ofile[i] && q->ofile[i]->type == FD_PIPE &&
+       q->ofile[i]->pipe == pi && q->ofile[i]->writable)
+      return 1;
+  return 0;
+}
+
+struct donation_frame {
+  struct proc *p;
+  uint deadline;
+  int next;
+};
+
+static int
+proc_index(struct proc *p)
+{
+  return p - ptable.proc;
+}
+
+static int
+donate_walk_locked(struct proc *reader, uint deadline,
+                   struct donation_event *events, int *nevents)
+{
+  struct donation_frame stack[NPROC];
+  uchar colour[NPROC];
+  struct proc *h;
+  int top, idx;
+
+  memset(colour, 0, sizeof(colour));
+  top = 0;
+  stack[0].p = reader;
+  stack[0].deadline = deadline;
+  stack[0].next = 0;
+  colour[proc_index(reader)] = 1;
+  while(top >= 0){
+    struct donation_frame *frame = &stack[top];
+    if(frame->next >= NPROC){
+      colour[proc_index(frame->p)] = 2;
+      top--;
+      continue;
+    }
+    idx = frame->next++;
+    h = &ptable.proc[idx];
+    if(h->state == UNUSED || !holds_write_end(h, frame->p->waiting_pipe) ||
+       h == frame->p)
+      continue;
+    if(h->donated == NO_DEADLINE ||
+       dl_before(frame->deadline, h->donated)){
+      h->donated = frame->deadline;
+      global_donations++;
+      if(*nevents < DONATION_EVENT_MAX){
+        events[*nevents].kind = DONATE_EVENT;
+        events[*nevents].donor = frame->p->pid;
+        events[*nevents].receiver = h->pid;
+        events[*nevents].deadline = frame->deadline;
+        (*nevents)++;
+      }
+    }
+    if(h->waiting_pipe == 0 || effective(h) == NO_DEADLINE)
+      continue;
+    idx = proc_index(h);
+    if(colour[idx] == 1){
+      if(!cycle_reported && *nevents < DONATION_EVENT_MAX){
+        cycle_reported = 1;
+        global_cycles++;
+        events[*nevents].kind = CYCLE_EVENT;
+        events[*nevents].donor = 0;
+        events[*nevents].receiver = 0;
+        (*nevents)++;
+      }
+      continue;
+    }
+    if(colour[idx] == 2)
+      continue;
+    if(top + 1 >= NPROC)
+      continue;
+    colour[idx] = 1;
+    top++;
+    stack[top].p = h;
+    stack[top].deadline = frame->deadline;
+    stack[top].next = 0;
+  }
+  return 0;
+}
+
+static void
+print_donation_events(struct donation_event *events, int nevents)
+{
+  int i;
+
+  if(!donation_debug)
+    return;
+  for(i = 0; i < nevents; i++)
+    if(events[i].kind == DONATE_EVENT)
+      cprintf("donate: donor=%d recv=%d dl=%x\n",
+              events[i].donor, events[i].receiver,
+              events[i].deadline);
+    else
+      cprintf("donate: cycle\n");
+}
+
+static void
+recompute_donations_locked(void)
+{
+  struct proc *q, *h;
+  uint d;
+  int round, changed;
+
+  for(q = ptable.proc; q < &ptable.proc[NPROC]; q++)
+    if(q->state != UNUSED)
+      q->donated = NO_DEADLINE;
+  for(round = 0; round < NPROC + 1; round++){
+    changed = 0;
+    for(q = ptable.proc; q < &ptable.proc[NPROC]; q++){
+      if(q->state == UNUSED || q->waiting_pipe == 0 ||
+         (d = effective(q)) == NO_DEADLINE)
+        continue;
+      for(h = ptable.proc; h < &ptable.proc[NPROC]; h++){
+        if(h != q && holds_write_end(h, q->waiting_pipe) &&
+           (h->donated == NO_DEADLINE || dl_before(d, h->donated))){
+          h->donated = d;
+          changed = 1;
+        }
+      }
+    }
+    if(!changed)
+      break;
+  }
+}
+
+void
+pipe_wait_begin(struct pipe *pi)
+{
+  struct donation_event events[DONATION_EVENT_MAX];
+  struct proc *p;
+  int nevents;
+  uint d;
+
+  p = myproc();
+  nevents = 0;
+  acquire(&ptable.lock);
+  p->waiting_pipe = pi;
+  d = effective(p);
+  if(sched_policy == 2 && d != NO_DEADLINE)
+    donate_walk_locked(p, d, events, &nevents);
+  release(&ptable.lock);
+  print_donation_events(events, nevents);
+}
+
+void
+pipe_wait_end(void)
+{
+  struct donation_event events[DONATION_EVENT_MAX];
+  struct proc *q;
+  int nevents;
+  int waiting;
+
+  nevents = 0;
+  acquire(&ptable.lock);
+  myproc()->waiting_pipe = 0;
+  if(sched_policy == 2){
+    recompute_donations_locked();
+    waiting = 0;
+    for(q = ptable.proc; q < &ptable.proc[NPROC]; q++)
+      if(q->state != UNUSED && q->waiting_pipe != 0)
+        waiting = 1;
+    if(!waiting)
+      cycle_reported = 0;
+  }
+  release(&ptable.lock);
+  print_donation_events(events, nevents);
 }
 
 // Admission runs under ptable.lock and reports after releasing it.
@@ -248,11 +450,44 @@ sys_schedinfo_impl(struct sched_stats *stats)
   stats->ncpu = ncpu;
   stats->ticks = now_ticks();
   stats->misses = global_misses;
-  stats->donations = 0;
-  stats->cycles = runcounter;
+  stats->donations = global_donations;
+  stats->cycles = global_cycles;
   stats->rejected = global_rejected;
   
   return 0;
+}
+
+int
+sys_procinfo_impl(int pid, struct procstat *stat)
+{
+  struct proc *p;
+
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+    if(p->state != UNUSED && p->pid == pid){
+      stat->state = p->state;
+      stat->deadline = p->deadline;
+      stat->donated = p->donated;
+      stat->waiting = p->waiting_pipe != 0;
+      release(&ptable.lock);
+      return 0;
+    }
+  release(&ptable.lock);
+  return -1;
+}
+
+int
+sys_tracectl_impl(int command)
+{
+  if(command == 4){
+    donation_debug = 1;
+    return 0;
+  }
+  if(command == 5){
+    donation_debug = 0;
+    return 0;
+  }
+  return -1;
 }
 
 // Must be called with interrupts disabled
@@ -494,6 +729,9 @@ exit(void)
 
   acquire(&ptable.lock);
 
+  curproc->waiting_pipe = 0;
+  if(sched_policy == 2)
+    recompute_donations_locked();
   mark_missed_locked(curproc);
   // Stage 2: Leave workflow if part of one
   wf_leave_locked(curproc);

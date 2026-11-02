@@ -108,6 +108,8 @@ extern int sys_add(void);
 extern int sys_setsched(void);
 extern int sys_setworkflow(void);
 extern int sys_schedinfo(void);
+extern int sys_tracectl(void);
+extern int sys_procinfo(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -136,6 +138,8 @@ static int (*syscalls[])(void) = {
 [SYS_setsched]     sys_setsched,
 [SYS_setworkflow]  sys_setworkflow,
 [SYS_schedinfo]    sys_schedinfo,
+[SYS_tracectl]     sys_tracectl,
+[SYS_procinfo]     sys_procinfo,
 
 };
 
@@ -154,4 +158,3 @@ syscall(void)
     curproc->tf->eax = -1;
   }
 }
-

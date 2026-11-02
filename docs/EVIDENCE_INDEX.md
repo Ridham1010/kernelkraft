@@ -25,7 +25,20 @@
 | `logs/20261026-021019.raw` | T-22 | Real QEMU run: `xrun ... cat` blocked on console input until the one-second bridge timeout; the session was terminated during restart. |
 | `logs/20261026-021021.raw` | T-22 | Fresh QEMU session after timeout recovery; `ls` completed with `@@DONE` and returned `README`. |
 | `host/tests/test_validator.py` | T-15 through T-21 and T-24 | Pytest coverage for unknown-tool rejection before bridge calls, invalid paths and allowlist, deadline and hog bounds, malformed arguments, bool-as-int rejection, per-run logging, CPU-preserving restart, and the full 17-test suite. |
+| `docs/gdb/stage5-session.txt` | Manual step 6 | Real GDB session connected to QEMU on port 26000, broke in `scheduler`, recorded a backtrace and CPU thread, then detached. |
 | `logs/20261026-220615.raw` | T-25 and T-28 | Stage 4 benign agent/manual workflow output with a successful `RESULT` line. |
 | `logs/audit.jsonl` latest records | T-26 | Injected `/inbox.txt` scenario: the proposed deadline-1 pipeline was rejected by the host validator before guest execution. |
 | `logs/T-27-stage4.raw` | T-27 | Manual shell bypass capture showing `admit: rejected ... reason=slack` and `wfgen: workflow rejected by kernel`. |
 | console captures from Stage 4 runs | T-30 through T-32 | Overdue workflow reported `miss=1`; fresh-filesystem usertests passed under all three policies; CPUS=3 workflow completed without panic. |
+| `logs/T34-T41-cpus1.raw` | T-34, T-35, T-38, T-39, T-40 | CPUS=1 EDF baseline, donation chain, five-stage chain, cycle, corrected two-donor withdrawal, and regression run capture. |
+| `logs/T36-T40-cpus3.raw` | T-36, T-38, T-40, T-42 | CPUS=3 five-stage chain, cycle, withdrawal, and no-panic chain capture. |
+| `logs/T38-T40-final-cpus1.raw` | T-38 through T-40 | Final CPUS=1 cycle and two-donor withdrawal capture after the sentinel and test-topology fixes. |
+| `logs/T38-T40-final-cpus3.raw` | T-38 through T-40 | Final CPUS=3 cycle and two-donor withdrawal capture. |
+| `logs/T39-T40-kill-cpus1.raw` | T-39, T-40 | Final CPUS=1 kill test: finite donation after one donor and `FFFFFFFF` after both donors. |
+| `logs/T39-T40-kill-cpus3.raw` | T-39, T-40 | Final CPUS=3 kill test: finite donation after one donor and `FFFFFFFF` after both donors. |
+| `logs/T41-usertests-cpus1.raw` | T-41 | Fresh-filesystem CPUS=1 `usertests` under `edf_donate`, ending `ALL TESTS PASSED`. |
+| `logs/T41-usertests-cpus3.raw` | T-41 | Fresh-filesystem CPUS=3 `usertests` under `edf_donate`, ending `ALL TESTS PASSED`. |
+| `logs/T43-negative-rr.raw` | T-43 | RR negative run: zero donations and no `donate:` diagnostics. |
+| `logs/T43-negative-edf.raw` | T-43 | EDF negative run: zero donations and no `donate:` diagnostics. |
+| `logs/T44-smallpipe.raw` | T-44 | Sub-512-byte pipe sanity run completed with `RESULT smallpipe` and no donation output. |
+| `logs/T45-stress20.raw` | T-45 | Twenty consecutive donation-test runs completed with no panic or hang. |

@@ -6,7 +6,9 @@
 | L-02 | One `setworkflow` per process | Process cannot change workflow after joining | Design choice; workflows are immutable per process |
 | L-03 | Workflow table size fixed at NWF=8 | Maximum 7 concurrent workflows (0 is reserved) | Increase NWF in `sched_params.h` if needed |
 | L-04 | Deadline miss detection is sampled at scheduler/exit boundaries | A process that remains outside those paths is marked on the next scheduler scan | Use scheduler and exit observations as the firm-deadline measurement points |
-| L-05 | Priority donation not implemented yet | `edf_donate` policy behaves same as `edf` | Stage 3 will implement donation through pipes |
+| L-05 | Donation uses an over-approximate holder scan and a benign race on `ofile` | A process can temporarily receive donation while it still has a duplicated writable descriptor | Donation is limited to pipes; close unused descriptors in tests |
+| L-17 | Donation is only modeled through pipes, not `wait`, locks, or regular files | Other priority-inversion paths are not accelerated | Use explicit pipe pipelines for this stage |
+| L-18 | Each donation event scans `NPROC * NOFILE` descriptor entries | Cost grows with the fixed process and descriptor-table sizes | Keep `NPROC` and pipe fan-out bounded |
 | L-06 | Admission control uses the configured slack and global urgent-process cap | It is not utilization-based admission control | Tune `MIN_SLACK` and `MAX_URGENT` in `sched_params.h` |
 | L-07 | `last_run` counter can wrap | 32-bit counter wraps after 4B scheduling cycles | Negligible for practical runs |
 | L-08 | `ticks` wrap-around handled only in `dl_before` | Other comparisons of deadlines may be incorrect if not using `dl_before` | Always use `dl_before` for deadline comparisons |

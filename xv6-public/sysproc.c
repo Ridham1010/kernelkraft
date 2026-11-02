@@ -150,3 +150,25 @@ sys_schedinfo(void)
   
   return sys_schedinfo_impl(stats);
 }
+
+int
+sys_tracectl(void)
+{
+  int command;
+
+  if(argint(0, &command) < 0)
+    return -1;
+  return sys_tracectl_impl(command);
+}
+
+int
+sys_procinfo(void)
+{
+  int pid;
+  struct procstat *stat;
+
+  if(argint(0, &pid) < 0 ||
+     argptr(1, (char**)&stat, sizeof(struct procstat)) < 0)
+    return -1;
+  return sys_procinfo_impl(pid, stat);
+}
