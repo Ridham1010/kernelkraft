@@ -42,3 +42,12 @@
 | `logs/T43-negative-edf.raw` | T-43 | EDF negative run: zero donations and no `donate:` diagnostics. |
 | `logs/T44-smallpipe.raw` | T-44 | Sub-512-byte pipe sanity run completed with `RESULT smallpipe` and no donation output. |
 | `logs/T45-stress20.raw` | T-45 | Twenty consecutive donation-test runs completed with no panic or hang. |
+
+
+| `logs/stage6-calibration/` | T-46/manual step 1 | Five CPUS=1 zero-hog calibration logs; finishes 14, 13, 13, 14, 14 ticks, mean 13.6, SD 0.55. |
+| `results.csv` | T-50 | Clean dry-run CSV with 12 rows; CPUS=1 succeeds and CPUS=3 is blocked by guest CPU detection. |
+| `logs/T49-trace-wrap.raw` | T-49 | 70 workloads followed by `schedtrace 256`; no panic and 256 retained entries. |
+| `logs/T51-kill-midrun.raw` | T-51 | Harness timeout classification and raw log after forced termination. |
+| `logs/T52-resume.raw` | T-52 | Resume run skipped all 12 completed keys. |
+| `logs/T53-interleave.raw` | T-53 | Concurrent second workflow rejected by admission; accepted RESULT remained intact. |
+| `host/plots/gantt-edf-donate.png` | Visual/manual step 4 | Gantt chart generated from 200 trace entries containing donation markers. |

@@ -1,0 +1,411 @@
+make: Entering directory '/home/ridham-shah/Desktop/kernelkraft/xv6-public'
+qemu-system-i386 -nographic -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,index=0,media=disk,format=raw -smp 1 -m 512 -snapshot
+c[?7l[2J[0mSeaBIOS (version 1.17.0-debian-1.17.0-1ubuntu1)
+
+
+iPXE (https://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+1EFC8E00+1EF08E00 CA00
+Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
+
+
+Booting from Hard Disk..xv6...
+cpu0: starting 0
+sb: size 4000 nblocks 3941 ninodes 200 nlog 30 logstart 2 inodestart 32 bmap start 58
+init: starting sh
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=1 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=1 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=1 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=1 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=1 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=1 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=1 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=1 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=1 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=1 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=1 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=1 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=1 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=1 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=1 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=1 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=1 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=1 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=1 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=1 deadline=300 miss=0
+$ wfgen 2 1 1 300 0
+RESULT policy=0 cpus=1 finish=0 deadline=300 miss=0
+$ schedtrace 256
+0xa57bfe75 0x0 0 2 2 0 885
+0xa57c4d77 0x0 0 165 1 0 886
+0xa65a92a0 0x0 0 165 2 0 887
+0xa65b661d 0x0 0 166 1 0 888
+0xa66934ea 0x0 0 166 2 0 889
+0xa669b232 0x0 0 165 1 0 890
+0xa69888ce 0x0 0 165 2 0 891
+0xa698d53d 0x0 0 167 1 0 892
+0xa6d28265 0x0 0 167 2 0 893
+0xa6d30182 0x0 0 165 1 0 894
+0xa6f0236b 0x0 0 165 2 0 895
+0xa6f096aa 0x0 0 2 1 0 896
+0xa70df214 0x0 0 2 2 0 897
+0xa73e7ed2 0x0 0 2 1 0 898
+0xa782af97 0x0 0 2 2 0 899
+0xa782fc86 0x0 0 168 1 0 900
+0xa7d76ddb 0x0 0 168 2 0 901
+0xa7d7eeca 0x0 0 168 1 0 902
+0xa8600451 0x0 0 168 2 0 903
+0xa8605d47 0x0 0 169 1 0 904
+0xa86dc107 0x0 0 169 2 0 905
+0xa86e0ddc 0x0 0 170 1 0 906
+0xa8a89637 0x0 0 170 2 0 907
+0xa8a946b6 0x0 0 168 1 0 908
+0xa8ddaf41 0x0 0 168 2 0 909
+0xa8de279d 0x0 0 2 1 0 910
+0xa8fbb4ea 0x0 0 2 2 0 911
+0xa924db17 0x0 0 2 1 0 912
+0xa9526e41 0x0 0 2 2 0 913
+0xa952e171 0x0 0 2 1 0 914
+0xa968dc61 0x0 0 2 2 0 915
+0xa9692425 0x0 0 171 1 0 916
+0xaa52de2f 0x0 0 171 2 0 917
+0xaa534ed3 0x0 0 172 1 0 918
+0xaa635387 0x0 0 172 2 0 919
+0xaa63ad39 0x0 0 173 1 0 920
+0xaaa5afeb 0x0 0 173 2 0 921
+0xaaa648e2 0x0 0 171 1 0 922
+0xaadc7a6a 0x0 0 171 2 0 923
+0xaadd03bf 0x0 0 171 1 0 924
+0xaae08e89 0x0 0 171 2 0 925
+0xaae109ba 0x0 0 2 1 0 926
+0xab025e20 0x0 0 2 2 0 927
+0xab2d27a4 0x0 0 2 1 0 928
+0xab750924 0x0 0 2 2 0 929
+0xab755adc 0x0 0 174 1 0 930
+0xac4cf2eb 0x0 0 174 2 0 931
+0xac4d8736 0x0 0 175 1 0 932
+0xac5ca8d4 0x0 0 175 2 0 933
+0xac5d35f1 0x0 0 174 1 0 934
+0xac9047aa 0x0 0 174 2 0 935
+0xac90a2a2 0x0 0 176 1 0 936
+0xacd12494 0x0 0 176 2 0 937
+0xacd1b323 0x0 0 174 1 0 938
+0xacf2b897 0x0 0 174 2 0 939
+0xacf33bb3 0x0 0 2 1 0 940
+0xad148f83 0x0 0 2 2 0 941
+0xad3e93f1 0x0 0 2 1 0 942
+0xad86fedc 0x0 0 2 2 0 943
+0xad875059 0x0 0 177 1 0 944
+0xadca5c11 0x0 0 177 2 0 945
+0xadcae7fe 0x0 0 177 1 0 946
+0xae7aad1a 0x0 0 177 2 0 947
+0xae7b0508 0x0 0 178 1 0 948
+0xae896cf1 0x0 0 178 2 0 949
+0xae89c257 0x0 0 179 1 0 950
+0xaf29b12f 0x0 0 179 2 0 951
+0xaf2a734c 0x0 0 177 1 0 952
+0xaf60bfa3 0x0 0 177 2 0 953
+0xaf614dea 0x0 0 177 1 0 954
+0xaf64d305 0x0 0 177 2 0 955
+0xaf65541b 0x0 0 2 1 0 956
+0xaf8b1006 0x0 0 2 2 0 957
+0xafad6ed4 0x0 0 2 1 0 958
+0xaff52919 0x0 0 2 2 0 959
+0xaff57b02 0x0 0 180 1 0 960
+0xb0c51aca 0x0 0 180 2 0 961
+0xb0c57667 0x0 0 181 1 0 962
+0xb0d41b25 0x0 0 181 2 0 963
+0xb0d4a782 0x0 0 180 1 0 964
+0xb1113963 0x0 0 180 2 0 965
+0xb1119859 0x0 0 182 1 0 966
+0xb15303f9 0x0 0 182 2 0 967
+0xb1539bf2 0x0 0 180 1 0 968
+0xb17624f4 0x0 0 180 2 0 969
+0xb176af90 0x0 0 2 1 0 970
+0xb19843c1 0x0 0 2 2 0 971
+0xb1c48471 0x0 0 2 1 0 972
+0xb20d83e1 0x0 0 2 2 0 973
+0xb20dd676 0x0 0 183 1 0 974
+0xb2427ccc 0x0 0 183 2 0 975
+0xb24303a7 0x0 0 183 1 0 976
+0xb309873e 0x0 0 183 2 0 977
+0xb309e1be 0x0 0 184 1 0 978
+0xb31897aa 0x0 0 184 2 0 979
+0xb318f0f0 0x0 0 185 1 0 980
+0xb358c999 0x0 0 185 2 0 981
+0xb35957c9 0x0 0 183 1 0 982
+0xb392623a 0x0 0 183 2 0 983
+0xb392efb1 0x0 0 2 1 0 984
+0xb3b516fc 0x0 0 2 2 0 985
+0xb3e0de4c 0x0 0 2 1 0 986
+0xb42aa9c5 0x0 0 2 2 0 987
+0xb42b0297 0x0 0 186 1 0 988
+0xb524fb8f 0x0 0 186 2 0 989
+0xb5255fb5 0x0 0 187 1 0 990
+0xb53406a0 0x0 0 187 2 0 991
+0xb5345e84 0x0 0 188 1 0 992
+0xb53d892a 0x0 0 188 2 0 993
+0xb53e1bd6 0x0 0 186 1 0 994
+0xb555d317 0x0 0 186 2 0 995
+0xb556222b 0x0 0 188 1 0 996
+0xb5907b71 0x0 0 188 2 0 997
+0xb5910afa 0x0 0 186 1 0 998
+0xb5b2304f 0x0 0 186 2 0 999
+0xb5b2b1fc 0x0 0 2 1 0 1000
+0xb5d45657 0x0 0 2 2 0 1001
+0xb5ff96e0 0x0 0 2 1 0 1002
+0xb648fb17 0x0 0 2 2 0 1003
+0xb6494fe3 0x0 0 189 1 0 1004
+0xb6ba7d74 0x0 0 189 2 0 1005
+0xb6bb10d5 0x0 0 189 1 0 1006
+0xb742c928 0x0 0 189 2 0 1007
+0xb7432265 0x0 0 190 1 0 1008
+0xb752407b 0x0 0 190 2 0 1009
+0xb75299a2 0x0 0 191 1 0 1010
+0xb7963819 0x0 0 191 2 0 1011
+0xb796ca96 0x0 0 189 1 0 1012
+0xb7ced725 0x0 0 189 2 0 1013
+0xb7cf5bf8 0x0 0 2 1 0 1014
+0xb7f0ae73 0x0 0 2 2 0 1015
+0xb8183e95 0x0 0 2 1 0 1016
+0xb832904b 0x0 0 2 2 0 1017
+0xb8330d0e 0x0 0 2 1 0 1018
+0xb863e786 0x0 0 2 2 0 1019
+0xb86438ff 0x0 0 192 1 0 1020
+0xb95a21c6 0x0 0 192 2 0 1021
+0xb95a84b0 0x0 0 193 1 0 1022
+0xb969e46d 0x0 0 193 2 0 1023
+0xb96a3f40 0x0 0 194 1 0 1024
+0xb9aceac8 0x0 0 194 2 0 1025
+0xb9ad872e 0x0 0 192 1 0 1026
+0xb9c57544 0x0 0 192 2 0 1027
+0xb9c5f8f8 0x0 0 192 1 0 1028
+0xb9e92d12 0x0 0 192 2 0 1029
+0xb9e9b25b 0x0 0 2 1 0 1030
+0xba0ee3f1 0x0 0 2 2 0 1031
+0xba37f38d 0x0 0 2 1 0 1032
+0xba812b71 0x0 0 2 2 0 1033
+0xba817c2b 0x0 0 195 1 0 1034
+0xbb2d7314 0x0 0 195 2 0 1035
+0xbb2e4117 0x0 0 195 1 0 1036
+0xbb7bc086 0x0 0 195 2 0 1037
+0xbb7c1a8a 0x0 0 196 1 0 1038
+0xbb8b32d8 0x0 0 196 2 0 1039
+0xbb8b8a13 0x0 0 197 1 0 1040
+0xbbcd7e04 0x0 0 197 2 0 1041
+0xbbce1036 0x0 0 195 1 0 1042
+0xbc07618c 0x0 0 195 2 0 1043
+0xbc07eed1 0x0 0 2 1 0 1044
+0xbc2a8619 0x0 0 2 2 0 1045
+0xbc57d31d 0x0 0 2 1 0 1046
+0xbca598cd 0x0 0 2 2 0 1047
+0xbca5ea6a 0x0 0 198 1 0 1048
+0xbcaa8706 0x0 0 198 2 0 1049
+0xbcab4bfa 0x0 0 198 1 0 1050
+0xbd9b4824 0x0 0 198 2 0 1051
+0xbd9baa03 0x0 0 199 1 0 1052
+0xbdaaade8 0x0 0 199 2 0 1053
+0xbdab0459 0x0 0 200 1 0 1054
+0xbdecd690 0x0 0 200 2 0 1055
+0xbded6f6a 0x0 0 198 1 0 1056
+0xbe27390f 0x0 0 198 2 0 1057
+0xbe27f983 0x0 0 2 1 0 1058
+0xbe4202c8 0x0 0 2 2 0 1059
+0xbe428327 0x0 0 2 1 0 1060
+0xbe4c90fa 0x0 0 2 2 0 1061
+0xbe76a0b6 0x0 0 2 1 0 1062
+0xbec1da21 0x0 0 2 2 0 1063
+0xbec22930 0x0 0 201 1 0 1064
+0xbfa34088 0x0 0 201 2 0 1065
+0xbfa39a78 0x0 0 202 1 0 1066
+0xbfb2935c 0x0 0 202 2 0 1067
+0xbfb323db 0x0 0 201 1 0 1068
+0xbfe6b9e8 0x0 0 201 2 0 1069
+0xbfe71313 0x0 0 203 1 0 1070
+0xc02a19fd 0x0 0 203 2 0 1071
+0xc02ab877 0x0 0 201 1 0 1072
+0xc04dbbb7 0x0 0 201 2 0 1073
+0xc04e4ec8 0x0 0 2 1 0 1074
+0xc071d0c6 0x0 0 2 2 0 1075
+0xc09abc52 0x0 0 2 1 0 1076
+0xc0e608d6 0x0 0 2 2 0 1077
+0xc0e65d5f 0x0 0 204 1 0 1078
+0xc121b93b 0x0 0 204 2 0 1079
+0xc1224d01 0x0 0 204 1 0 1080
+0xc1e12e72 0x0 0 204 2 0 1081
+0xc1e18723 0x0 0 205 1 0 1082
+0xc1f041d0 0x0 0 205 2 0 1083
+0xc1f097c8 0x0 0 206 1 0 1084
+0xc2318306 0x0 0 206 2 0 1085
+0xc2321296 0x0 0 204 1 0 1086
+0xc26b79f7 0x0 0 204 2 0 1087
+0xc26c06ab 0x0 0 2 1 0 1088
+0xc28ea91d 0x0 0 2 2 0 1089
+0xc2bae40c 0x0 0 2 1 0 1090
+0xc3049719 0x0 0 2 2 0 1091
+0xc304eb2b 0x0 0 207 1 0 1092
+0xc3fce0bb 0x0 0 207 2 0 1093
+0xc3fd3ffa 0x0 0 208 1 0 1094
+0xc40c23ff 0x0 0 208 2 0 1095
+0xc40c7b5b 0x0 0 209 1 0 1096
+0xc41e7f98 0x0 0 209 2 0 1097
+0xc41f103e 0x0 0 207 1 0 1098
+0xc4373cdc 0x0 0 207 2 0 1099
+0xc4378cb4 0x0 0 209 1 0 1100
+0xc46a0f77 0x0 0 209 2 0 1101
+0xc46a9e9d 0x0 0 207 1 0 1102
+0xc48bde56 0x0 0 207 2 0 1103
+0xc48c63d8 0x0 0 2 1 0 1104
+0xc4adf814 0x0 0 2 2 0 1105
+0xc4d519c0 0x0 0 2 1 0 1106
+0xc51f3c01 0x0 0 2 2 0 1107
+0xc51f9210 0x0 0 210 1 0 1108
+0xc5b45a06 0x0 0 210 2 0 1109
+0xc5b4e9b8 0x0 0 210 1 0 1110
+0xc61d1714 0x0 0 210 2 0 1111
+0xc61d711f 0x0 0 211 1 0 1112
+0xc62c7aa8 0x0 0 211 2 0 1113
+0xc62cd0c6 0x0 0 212 1 0 1114
+0xc66eb57a 0x0 0 212 2 0 1115
+0xc66f4b59 0x0 0 210 1 0 1116
+0xc6a9443d 0x0 0 210 2 0 1117
+0xc6a9cd16 0x0 0 2 1 0 1118
+0xc6ccc90c 0x0 0 2 2 0 1119
+0xc6f3da19 0x0 0 2 1 0 1120
+0xc7140c1a 0x0 0 2 2 0 1121
+0xc7148db7 0x0 0 2 1 0 1122
+0xc73a0e58 0x0 0 2 2 0 1123
+0xc73a61e9 0x0 0 213 1 0 1124
+0xc787a225 0x0 0 213 2 0 1125
+0xc78c83c1 0x0 0 213 1 0 1126
+0xc7b1d0e0 0x0 0 213 2 0 1127
+0xc7b4fa66 0x0 0 213 1 0 1128
+0xc7b7bef7 0x0 0 213 2 0 1129
+0xc7b913b5 0x0 0 213 1 0 1130
+0xc7bbbe65 0x0 0 213 2 0 1131
+0xc7bd594a 0x0 0 213 1 0 1132
+0xc7c04af2 0x0 0 213 2 0 1133
+0xc7c19653 0x0 0 213 1 0 1134
+0xc7c465e7 0x0 0 213 2 0 1135
+0xc7c5bd6e 0x0 0 213 1 0 1136
+0xc7c88050 0x0 0 213 2 0 1137
+0xc7c9d810 0x0 0 213 1 0 1138
+0xc7cc5727 0x0 0 213 2 0 1139
+0xc7ce1b48 0x0 0 213 1 0 1140
+$ 

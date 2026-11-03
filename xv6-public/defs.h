@@ -140,6 +140,7 @@ int             sys_setworkflow_impl(int wid, int deadline);
 int             sys_schedinfo_impl(struct sched_stats *stats);
 int             sys_procinfo_impl(int pid, struct procstat *stat);
 int             sys_tracectl_impl(int command);
+int             sys_schedtrace_impl(uint dst, int max);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

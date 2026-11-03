@@ -25,11 +25,11 @@ main(void)
     exit();
   }
   close(a[0]); close(a[1]); close(b[0]); close(b[1]);
-  tracectl(4);
+  tracectl(3);
   sleep(20);
   kill(p1); kill(p2);
   wait(); wait();
-  tracectl(5);
+  tracectl(4);
   write(1, "RESULT cycletest\n", 18);
   exit();
 }

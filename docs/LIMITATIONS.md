@@ -9,6 +9,12 @@
 | L-05 | Donation uses an over-approximate holder scan and a benign race on `ofile` | A process can temporarily receive donation while it still has a duplicated writable descriptor | Donation is limited to pipes; close unused descriptors in tests |
 | L-17 | Donation is only modeled through pipes, not `wait`, locks, or regular files | Other priority-inversion paths are not accelerated | Use explicit pipe pipelines for this stage |
 | L-18 | Each donation event scans `NPROC * NOFILE` descriptor entries | Cost grows with the fixed process and descriptor-table sizes | Keep `NPROC` and pipe fan-out bounded |
+| L-19 | Timer nondeterminism under QEMU TCG | Tick timing varies with host load; deadline misses may be non-deterministic | Record raw logs and repeat measurements |
+| L-20 | Trace ring wraps and drops oldest entries | Ring capacity is fixed at 256 entries per CPU; long runs lose early events | Increase `TRACE_SIZE` in `sched_params.h` if needed |
+| L-21 | `rdtsc` assumptions | Assumes invariant TSC across cores and no frequency scaling; may not hold on all hardware | Use tick-based timing as fallback for critical sections |
+| L-22 | Trace ring uses `ptable.lock` for all writers | Coarse locking adds contention to scheduler/donation paths | N/A for course scope (NCPU ≤ 8) |
+| L-23 | Some Stage 6 evidence requires manual QEMU execution | CPUS=3 and two-successful-workflow interleaving are environment/design-blocked | Use an xv6-compatible SMP QEMU setup and distinct workflow IDs before rerunning those cases |
+| L-24 | This QEMU/xv6 environment reports one CPU despite `-smp 3` | CPUS=3 harness rows cannot be accepted as valid multi-core observations | Use an xv6-compatible QEMU/MP configuration and rerun T-50 before the final batch |
 | L-06 | Admission control uses the configured slack and global urgent-process cap | It is not utilization-based admission control | Tune `MIN_SLACK` and `MAX_URGENT` in `sched_params.h` |
 | L-07 | `last_run` counter can wrap | 32-bit counter wraps after 4B scheduling cycles | Negligible for practical runs |
 | L-08 | `ticks` wrap-around handled only in `dl_before` | Other comparisons of deadlines may be incorrect if not using `dl_before` | Always use `dl_before` for deadline comparisons |

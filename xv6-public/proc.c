@@ -43,6 +43,13 @@ static int global_cycles;
 static int donation_debug;
 static int cycle_reported;
 
+// Stage 6: Trace ring - per-CPU circular buffer for scheduling events
+// All writers must hold ptable.lock (documented in DESIGN.md)
+static struct trace_ent trace_ring[NCPU][TRACE_SIZE];
+static uint trace_head[NCPU];        // Next write index per CPU
+static int trace_enabled = 1;        // Trace enabled by default
+static uint trace_seq = 0;           // Global sequence counter
+
 struct donation_event {
   int kind;
   int donor;
@@ -70,6 +77,27 @@ now_ticks(void)
 {
   // Unlocked volatile read of ticks - 32-bit aligned read is atomic on x86
   return ticks;
+}
+
+// Stage 6: Trace ring logging function
+// Called with ptable.lock held. Records an event to the per-CPU trace ring.
+static void
+trace_event(int cpu, short pid, short ev, int arg)
+{
+  if (!trace_enabled)
+    return;
+  uint tlo, thi;
+  rdtsc(&tlo, &thi);
+  struct trace_ent *e = &trace_ring[cpu][trace_head[cpu] % TRACE_SIZE];
+  e->tlo = tlo;
+  e->thi = thi;
+  e->cpu = cpu;
+  e->pid = pid;
+  e->ev = ev;
+  e->pad = 0;
+  e->arg = arg;
+  e->seq = trace_seq++;
+  trace_head[cpu]++;
 }
 
 // Stage 2: Helper function - compare deadlines with wrap-around safety
@@ -156,6 +184,7 @@ donate_walk_locked(struct proc *reader, uint deadline,
        dl_before(frame->deadline, h->donated)){
       h->donated = frame->deadline;
       global_donations++;
+      trace_event(cpuid(), h->pid, TRACE_DONATE, frame->deadline);
       if(*nevents < DONATION_EVENT_MAX){
         events[*nevents].kind = DONATE_EVENT;
         events[*nevents].donor = frame->p->pid;
@@ -171,6 +200,7 @@ donate_walk_locked(struct proc *reader, uint deadline,
       if(!cycle_reported && *nevents < DONATION_EVENT_MAX){
         cycle_reported = 1;
         global_cycles++;
+        trace_event(cpuid(), frame->p->pid, TRACE_CYCLE, 0);
         events[*nevents].kind = CYCLE_EVENT;
         events[*nevents].donor = 0;
         events[*nevents].receiver = 0;
@@ -214,9 +244,12 @@ recompute_donations_locked(void)
   uint d;
   int round, changed;
 
+  // Clear all donated deadlines and emit WITHDRAW trace events
   for(q = ptable.proc; q < &ptable.proc[NPROC]; q++)
-    if(q->state != UNUSED)
+    if(q->state != UNUSED && q->donated != NO_DEADLINE) {
+      trace_event(cpuid(), q->pid, TRACE_WITHDRAW, q->donated);
       q->donated = NO_DEADLINE;
+    }
   for(round = 0; round < NPROC + 1; round++){
     changed = 0;
     for(q = ptable.proc; q < &ptable.proc[NPROC]; q++){
@@ -320,6 +353,7 @@ mark_missed_locked(struct proc *p)
     return;
   p->missed = 1;
   global_misses++;
+  trace_event(cpuid(), p->pid, TRACE_DEADLINE_MISS, p->deadline);
   if (p->wid > 0 && p->wid < NWF) {
     w = &workflows[p->wid];
     if (w->wid == p->wid)
@@ -457,6 +491,68 @@ sys_schedinfo_impl(struct sched_stats *stats)
   return 0;
 }
 
+// Stage 6: schedtrace syscall implementation
+// Copies trace entries from per-CPU rings to user buffer, oldest-first
+// Returns the number of entries copied
+int
+sys_schedtrace_impl(uint dst, int max)
+{
+  struct trace_ent *src;
+  int available = 0;
+  int cpu, idx, count, copied;
+
+  if (max < 0)
+    return -1;
+  if (max == 0)
+    return 0;
+
+  acquire(&ptable.lock);
+
+  // Clamp to the total retained entries; the user buffer is validated first.
+  for (cpu = 0; cpu < ncpu; cpu++) {
+    count = trace_head[cpu];
+    if (count > TRACE_SIZE)
+      count = TRACE_SIZE;
+    available += count;
+  }
+  if (available > max)
+    available = max;
+  if (available == 0) {
+    release(&ptable.lock);
+    return 0;
+  }
+
+  // Copy while locked so a writer cannot change the ring slot mid-copy.
+  // copyout does not acquire a lock and therefore does not change lock order.
+  copied = 0;
+  for (cpu = 0; cpu < ncpu; cpu++) {
+    count = trace_head[cpu];
+    if (count > TRACE_SIZE)
+      count = TRACE_SIZE;
+    if (count > available - copied)
+      count = available - copied;
+
+    // Oldest entry is at (trace_head[cpu] - count) % TRACE_SIZE
+    int start = (trace_head[cpu] >= count) ? trace_head[cpu] - count : trace_head[cpu] - count + TRACE_SIZE;
+
+    for (int i = 0; i < count; i++) {
+      idx = (start + i) % TRACE_SIZE;
+      src = &trace_ring[cpu][idx];
+      if (copyout(myproc()->pgdir, dst + copied * sizeof(struct trace_ent),
+                  src, sizeof(struct trace_ent)) < 0) {
+        release(&ptable.lock);
+        return -1;
+      }
+      copied++;
+    }
+    if (copied == available)
+      break;
+  }
+
+  release(&ptable.lock);
+  return copied;
+}
+
 int
 sys_procinfo_impl(int pid, struct procstat *stat)
 {
@@ -479,14 +575,36 @@ sys_procinfo_impl(int pid, struct procstat *stat)
 int
 sys_tracectl_impl(int command)
 {
-  if(command == 4){
+  // Keep the state changes under ptable.lock, like trace writers.
+  acquire(&ptable.lock);
+  if(command == 0){
+    trace_enabled = 0;
+    release(&ptable.lock);
+    return 0;
+  }
+  if(command == 1){
+    trace_enabled = 1;
+    release(&ptable.lock);
+    return 0;
+  }
+  if(command == 2){
+    for(int cpu = 0; cpu < ncpu; cpu++)
+      trace_head[cpu] = 0;
+    trace_seq = 0;
+    release(&ptable.lock);
+    return 0;
+  }
+  if(command == 3){
     donation_debug = 1;
+    release(&ptable.lock);
     return 0;
   }
-  if(command == 5){
+  if(command == 4 || command == 5){
     donation_debug = 0;
+    release(&ptable.lock);
     return 0;
   }
+  release(&ptable.lock);
   return -1;
 }
 
@@ -833,12 +951,14 @@ scheduler(void)
         c->proc = p;
         switchuvm(p);
         p->state = RUNNING;
+        trace_event(cpuid(), p->pid, TRACE_SWITCH_IN, 0);
 
         swtch(&(c->scheduler), p->context);
         switchkvm();
 
         // Process is done running for now.
         // It should have changed its p->state before coming back.
+        trace_event(cpuid(), p->pid, TRACE_SWITCH_OUT, 0);
         c->proc = 0;
       }
       release(&ptable.lock);
@@ -882,11 +1002,13 @@ scheduler(void)
         c->proc = best;
         switchuvm(best);
         best->state = RUNNING;
+        trace_event(cpuid(), best->pid, TRACE_SWITCH_IN, 0);
 
         swtch(&(c->scheduler), best->context);
         switchkvm();
 
         // Process is done running for now.
+        trace_event(cpuid(), best->pid, TRACE_SWITCH_OUT, 0);
         c->proc = 0;
       }
       release(&ptable.lock);

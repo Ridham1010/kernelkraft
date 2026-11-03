@@ -110,6 +110,7 @@ extern int sys_setworkflow(void);
 extern int sys_schedinfo(void);
 extern int sys_tracectl(void);
 extern int sys_procinfo(void);
+extern int sys_schedtrace(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -140,6 +141,7 @@ static int (*syscalls[])(void) = {
 [SYS_schedinfo]    sys_schedinfo,
 [SYS_tracectl]     sys_tracectl,
 [SYS_procinfo]     sys_procinfo,
+[SYS_schedtrace]   sys_schedtrace,
 
 };
 

@@ -270,3 +270,106 @@ the scheduler already holds `ptable.lock` and we must never acquire
 - `donations`: Number of priority donations (0 in Stage 2)
 - `cycles`: Pipe-donation cycle counter
 - `rejected`: Sum of `workflow.rejected` across all workflows
+
+## Stage 6: Workload Generator, Trace Ring, and Harness
+
+### Workload Design (`wfgen`)
+
+The `wfgen` (workflow generator) program creates multi-stage pipelines with configurable CPU-bound "hog" processes to stress-test the scheduler. It takes 5 parameters:
+
+- `stages`: Number of pipeline stages (2-6)
+- `work`: CPU work units per stage (busy-loop iterations)
+- `bytes`: Total bytes to pass through the pipeline
+- `deadline`: Relative deadline in ticks for the workflow
+- `hogs`: Number of CPU-bound background processes
+
+**Architecture:**
+1. `hogs` background processes are forked first, each running an infinite `burn(work)` loop
+2. Stage 1 (producer) writes `bytes` bytes to a pipe in chunks, doing `burn(work)` between writes
+3. Stage 2 (consumer) calls `setworkflow(wid, deadline)`, reads from pipe doing `burn(work)` per chunk
+4. Stages 2-6 are supported; each stage forwards the pipe data and performs its configured work
+5. Parent waits for all children, kills hogs, and prints a single `RESULT` line with: policy, cpus, finish time, deadline, miss count
+
+The `RESULT` line is built in a buffer and emitted with a single `write()` to avoid interleaving with other processes' output.
+
+**Hygiene:** All file descriptors are properly closed in each process. Hog processes are killed and waited on to avoid zombies.
+
+### Trace Ring
+
+A per-CPU circular trace ring records scheduling events for offline analysis and visualization.
+
+**Structure (in `proc.c`):**
+```c
+struct trace_ent {
+    uint tlo;       // TSC low 32 bits (from rdtsc)
+    uint thi;       // TSC high 32 bits (from rdtsc)
+    short cpu;      // CPU ID (0..NCPU-1)
+    short pid;      // Process ID
+    short ev;       // Event type (TRACE_*)
+    short pad;      // Padding for alignment
+    int arg;        // Event-specific argument (deadline, etc.)
+    uint seq;       // Global sequence number
+};
+static struct trace_ent trace_ring[NCPU][TRACE_SIZE];
+static uint trace_head[NCPU];     // Next write index per CPU
+static int trace_enabled = 1;     // Trace enabled by default
+static uint trace_seq = 0;        // Global sequence counter
+```
+
+**Event Types:**
+- `TRACE_SWITCH_IN` (1): Process starts running on CPU
+- `TRACE_SWITCH_OUT` (2): Process stops running on CPU
+- `TRACE_DONATE` (3): Priority donation occurred (donor -> receiver)
+- `TRACE_WITHDRAW` (4): Donation withdrawn (receiver's donated cleared)
+- `TRACE_CYCLE` (5): Donation cycle detected
+- `TRACE_DEADLINE_MISS` (6): Process missed its deadline
+
+**Locking:** All writers hold `ptable.lock`. The trace ring is updated while `ptable.lock` is held in:
+- `scheduler()`: emits SWITCH_IN before `swtch()`, SWITCH_OUT after `swtch()`
+- `donate_walk_locked()`: emits DONATE when deadline propagated, CYCLE when cycle detected
+- `recompute_donations_locked()`: emits WITHDRAW when clearing donated deadlines
+- `mark_missed_locked()`: emits DEADLINE_MISS when deadline missed
+
+**Timestamp Source:** `rdtsc()` reads the CPU's Time-Stamp Counter (64-bit, split into `tlo`/`thi`). This provides high-resolution timestamps independent of the tick counter. The global `trace_seq` provides a total ordering across CPUs.
+
+**Ring Wrap:** When `trace_head[cpu] >= TRACE_SIZE`, new entries overwrite oldest entries. The `seq` field allows detecting gaps.
+
+**Syscall 29 (`schedtrace`):** Copies at most `max` entries total from all CPU rings to a validated user buffer, oldest-first within each CPU. The copy is performed while `ptable.lock` is held so ring slots cannot change.
+
+**Syscall 27 (`tracectl`):** Controls tracing:
+- 0: disable trace
+- 1: enable trace
+- 2: clear all rings (reset heads and seq)
+- 3: enable donation debug prints (existing)
+- 4: disable donation debug prints (existing)
+
+### Host Harness (`run_all.py`)
+
+The unattended test harness runs the full test matrix:
+- Policies: `rr`, `edf`, `edf_donate`
+- CPUs: 1, 3
+- 20 runs per cell (2 for `--dry-run`)
+- Restarts QEMU per run with `-snapshot` for isolation
+- Parses strict `RESULT` regex from guest output
+- Produces CSV with columns: `policy,cpus,run,alpha,finish,deadline,miss,status,commit_hash,rawlog_path`
+- Resume support: skips already-completed cells
+- Survives QEMU panic/timeout: records failure row and continues
+
+### Gantt Plotter (`plot_gantt.py`)
+
+Parses `schedtrace` output text, creates a Gantt chart:
+- One lane per CPU
+- Horizontal bar per process interval (SWITCH_IN to SWITCH_OUT)
+- Vertical markers for DONATE (red), WITHDRAW (blue), CYCLE (yellow), DEADLINE_MISS (black)
+- Outputs PNG for visual inspection of donation chains
+
+### Calibration (`calib`)
+
+Busy-loop calibration program to determine `work` units per tick:
+- Runs `N` iterations of a standardized busy loop
+- Prints `uptime()` delta
+- Used to compute `W` (ticks per work unit) for workload sizing
+
+Calibration and dry-run evidence are stored under `logs/` and `results.csv`.
+The CPUS=3 portion remains blocked in this environment because xv6 reports only
+one discovered CPU despite QEMU receiving `-smp 3`.

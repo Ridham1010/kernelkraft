@@ -196,6 +196,9 @@ UPROGS=\
 	_cycletest\
 	_killtest\
 	_smallpipe\
+	_schedtrace\
+	_calib\
+	_tracectl
 
 fs.img: mkfs README report.txt inbox.txt $(UPROGS)
 	./mkfs fs.img README report.txt inbox.txt $(UPROGS)
@@ -267,7 +270,7 @@ EXTRA=\
 	ln.c ls.c mkdir.c rm.c stressfs.c usertests.c wc.c zombie.c\
 	printf.c umalloc.c mytest.c hello_test.c ticktest.c add_test.c\
 	schedctl.c schedstat.c edftest.c test_negative.c donatetest.c donate5.c\
-	cycletest.c killtest.c smallpipe.c\
+	cycletest.c killtest.c smallpipe.c schedtrace.c calib.c tracectl.c\
 	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
 	.gdbinit.tmpl gdbutil\
 

@@ -21,7 +21,7 @@ main(void)
   for(i = 0; i < 4; i++)
     pipe(p[i]);
   setworkflow(1, DONATION_TEST_DEADLINE);
-  tracectl(4);
+  tracectl(3);
   pid[0] = fork();
   if(pid[0] == 0){
     for(i = 0; i < 4; i++)
@@ -64,7 +64,7 @@ main(void)
     printf(1, "CHECK donate5 donations=%d cycles=%d misses=%d\n",
            stats.donations, stats.cycles, stats.misses);
   }
-  tracectl(5);
+  tracectl(4);
   write(1, "RESULT donate5\n", 16);
   exit();
 }

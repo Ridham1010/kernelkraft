@@ -25,7 +25,7 @@ main(void)
   pipe(p12);
   pipe(p23);
   setworkflow(1, DONATION_TEST_DEADLINE);
-  tracectl(4);
+  tracectl(3);
   p[0] = fork();
   if(p[0] == 0){
     close(p01[0]); close(p12[0]); close(p12[1]); close(p23[0]); close(p23[1]);
@@ -76,7 +76,7 @@ main(void)
     printf(1, "CHECK donatetest donations=%d cycles=%d misses=%d\n",
            stats.donations, stats.cycles, stats.misses);
   }
-  tracectl(5);
+  tracectl(4);
   write(1, "RESULT donatetest\n", 19);
   exit();
 }

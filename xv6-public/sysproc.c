@@ -135,7 +135,7 @@ sys_setworkflow(void)
   
   if(argint(0, &wid) < 0 || argint(1, &deadline) < 0)
     return -1;
-  
+
   return sys_setworkflow_impl(wid, deadline);
 }
 
@@ -171,4 +171,24 @@ sys_procinfo(void)
      argptr(1, (char**)&stat, sizeof(struct procstat)) < 0)
     return -1;
   return sys_procinfo_impl(pid, stat);
+}
+
+// Stage 6: schedtrace - copy trace ring entries to user buffer
+// dst: pointer to array of struct trace_ent
+// max: maximum number of entries to copy
+// Returns: number of entries copied, or -1 on error
+int
+sys_schedtrace(void)
+{
+  char *dst;
+  int max;
+
+  if(argint(1, &max) < 0)
+    return -1;
+  if(max < 0 || max > NCPU * TRACE_SIZE)
+    return -1;
+  if(argptr(0, &dst, max * sizeof(struct trace_ent)) < 0)
+    return -1;
+
+  return sys_schedtrace_impl((uint)dst, max);
 }

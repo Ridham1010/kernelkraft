@@ -61,3 +61,13 @@ user can bypass the host agent and type a command directly at the xv6 shell.
 ## Problems
 
 ## Limits
+
+## Stage 6: Trace and Workload
+
+The trace ring provides a lightweight, per-CPU circular buffer for recording scheduling events. Each entry captures the TSC timestamp (via `rdtsc`), CPU ID, process ID, event type, argument, and a global sequence number. The ring is written while holding `ptable.lock` by the scheduler (context switches), donation code (DONATE, WITHDRAW, CYCLE), and deadline miss detection.
+
+The `schedtrace` syscall (29) reads the rings and copies entries to a user buffer, oldest-first per CPU. The `tracectl` syscall (27) controls tracing: enable/disable, clear, and donation debug prints.
+
+The `wfgen` workload generator creates multi-stage pipelines with configurable hog processes. It prints a single `RESULT` line with structured output for automated parsing. The `calib` program measures busy-loop iterations per tick for workload sizing.
+
+The host harness (`run_all.py`) runs the full test matrix (policies × CPUs × runs) with QEMU snapshot isolation, CSV output, and resume support. The Gantt plotter (`plot_gantt.py`) visualizes trace data with donation markers.

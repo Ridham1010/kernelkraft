@@ -11,7 +11,7 @@ main(void)
 
   pipe(hold); pipe(waitp);
   setworkflow(1, DONATION_TEST_DEADLINE);
-  tracectl(4);
+  tracectl(3);
   receiver = fork();
   if(receiver == 0){
     close(hold[1]); close(waitp[0]);
@@ -50,6 +50,6 @@ main(void)
     write(1, "FAIL killtest\n", 15);
   kill(receiver);
   wait();
-  tracectl(5);
+  tracectl(4);
   exit();
 }

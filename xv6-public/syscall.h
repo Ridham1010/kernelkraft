@@ -27,3 +27,4 @@
 #define SYS_schedinfo  26
 #define SYS_tracectl   27
 #define SYS_procinfo   28
+#define SYS_schedtrace 29

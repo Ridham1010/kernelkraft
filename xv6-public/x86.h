@@ -117,6 +117,14 @@ sti(void)
   asm volatile("sti");
 }
 
+// Read Time-Stamp Counter (TSC) - returns 64-bit value in EDX:EAX
+// tlo = low 32 bits, thi = high 32 bits
+static inline void
+rdtsc(uint *tlo, uint *thi)
+{
+  asm volatile("rdtsc" : "=a" (*tlo), "=d" (*thi));
+}
+
 static inline uint
 xchg(volatile uint *addr, uint newval)
 {

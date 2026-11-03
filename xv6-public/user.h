@@ -11,6 +11,7 @@ int setworkflow(int wid, int deadline);
 int schedinfo(struct sched_stats *stats);
 int tracectl(int command);
 int procinfo(int pid, struct procstat *stat);
+int schedtrace(struct trace_ent *dst, int max);
 int fork(void);
 int exit(void) __attribute__((noreturn));
 int wait(void);
