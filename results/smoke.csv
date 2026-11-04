@@ -1,0 +1,7 @@
+policy,cpus,run,alpha,finish,deadline,miss,status,commit_hash,rawlog_path,miss_kernel
+rr,1,1,1.5,49,37,1,success,043a34b5,logs/smoke_20261104/rr_cpus1_a1.5_run1.raw,1
+rr,3,1,1.5,29,37,0,success,043a34b5,logs/smoke_20261104/rr_cpus3_a1.5_run1.raw,0
+edf,1,1,1.5,49,37,1,success,043a34b5,logs/smoke_20261104/edf_cpus1_a1.5_run1.raw,1
+edf,3,1,1.5,25,37,0,success,043a34b5,logs/smoke_20261104/edf_cpus3_a1.5_run1.raw,0
+edf_donate,1,1,1.5,26,37,0,success,043a34b5,logs/smoke_20261104/edf_donate_cpus1_a1.5_run1.raw,0
+edf_donate,3,1,1.5,24,37,0,success,043a34b5,logs/smoke_20261104/edf_donate_cpus3_a1.5_run1.raw,0

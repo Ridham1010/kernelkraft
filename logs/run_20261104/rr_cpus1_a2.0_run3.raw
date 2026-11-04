@@ -1,0 +1,17 @@
+make: Entering directory '/home/cyberfire/Downloads/kernelkraft/xv6-public'
+qemu-system-i386 -nographic -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,index=0,media=disk,format=raw -smp 1 -m 512 -snapshot -machine pc-i440fx-yakkety
+c[?7l[2J[0mSeaBIOS (version 1.16.3-debian-1.16.3-2)
+
+
+iPXE (http://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+1EFCDF60+1EF0DF60 CA00
+Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
+
+
+Booting from Hard Disk..xv6...
+cpu0: starting 0
+sb: size 4000 nblocks 3941 ninodes 200 nlog 30 logstart 2 inodestart 32 bmap start 58
+init: starting sh
+$ schedctl rr
+Scheduler policy set to rr
+$ wfgen 4 100 1024 49 3
+RESULT policy=0 cpus=1 finish=45 deadline=49 miss=0
