@@ -1,0 +1,32 @@
+qemu-system-i386 -nographic -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,index=0,media=disk,format=raw -smp 1 -m 512 -snapshot -machine pc-i440fx-yakkety
+c[?7l[2J[0mSeaBIOS (version 1.16.3-debian-1.16.3-2)
+
+
+iPXE (http://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+1EFCDF60+1EF0DF60 CA00
+Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
+
+
+Booting from Hard Disk..xv6...
+cpu0: starting 0
+sb: size 4000 nblocks 3941 ninodes 200 nlog 30 logstart 2 inodestart 32 bmap start 58
+init: starting sh
+$ schedctl edf
+Scheduler policy set to edf
+$ wfgen 4 100 1024 30 3
+RESULT policy=1 cpus=1 finish=59 deadline=30 miss=1
+$ wfgen 4 100 1024 30 3
+RESULT policy=1 cpus=1 finish=58 deadline=30 miss=2
+$ wfgen 4 100 1024 40 3
+RESULT policy=1 cpus=1 finish=69 deadline=40 miss=3
+$ wfgen 4 100 1024 40 3
+RESULT policy=1 cpus=1 finish=69 deadline=40 miss=4
+$ wfgen 4 100 1024 60 3
+RESULT policy=1 cpus=1 finish=87 deadline=60 miss=5
+$ wfgen 4 100 1024 60 3
+RESULT policy=1 cpus=1 finish=89 deadline=60 miss=6
+$ wfgen 4 100 1024 80 3
+RESULT policy=1 cpus=1 finish=108 deadline=80 miss=7
+$ wfgen 4 100 1024 80 3
+RESULT policy=1 cpus=1 finish=113 deadline=80 miss=8
+$ QEMU: Terminated
+
