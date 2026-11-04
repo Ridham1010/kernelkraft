@@ -200,6 +200,8 @@ deadline `0xFFFFFF10` (16 ticks from now), Process B has deadline `0x00000020`
 - `a - b = 0xFFFFFF10 - 0x00000020 = 0xFFFFFFF0` (signed: -16)
 - `(int)(a - b) < 0` is true, so A is correctly determined to be before B.
 
+Superseded by the Stage 7 fix (305a13f); see 'Stage 7: dl_before fix'.
+
 ### Scheduler Algorithm (Policies 1 and 2)
 
 For EDF policies, the scheduler scans all `NPROC` slots while holding
@@ -373,3 +375,86 @@ Busy-loop calibration program to determine `work` units per tick:
 Calibration and dry-run evidence are stored under `logs/` and `results.csv`.
 The CPUS=3 portion remains blocked in this environment because xv6 reports only
 one discovered CPU despite QEMU receiving `-smp 3`.
+
+## Stage 7: Measurement, Analysis, and Adaptive Agent
+
+### `dl_before` fix (305a13f)
+
+`dl_before(a, b)` was `(int)(a - b) < 0`. With `NO_DEADLINE = 0xffffffff`
+the cast gives -1, so a real deadline sorted after "no deadline". Two effects
+followed: under edf and edf_donate a process with a deadline lost to every
+`NO_DEADLINE` process, and `effective()` ignored a donated deadline for a
+stage with no own deadline. In the pilot (`logs/stage7-pilot/`) edf and
+edf_donate both finished at about deadline + 30 ticks for
+`wfgen 4 100 1024 D 3` on CPUS=1. The fix treats `NO_DEADLINE` as the latest
+value: if `a` is `NO_DEADLINE` the result is false, else if `b` is
+`NO_DEADLINE` the result is true, else the signed comparison applies.
+
+Side effect: donation now propagates through stages that have no own
+deadline, so traces show more DONATE events than the Stage 5 logs. After the
+fix, usertests passed under rr (default machine and machine flag), edf
+CPUS=1, edf_donate CPUS=1 and edf_donate CPUS=3; see L-28 and L-29 for the
+exceptions.
+
+### Host miss rule
+
+The kernel's `RESULT miss=` field is `global_misses`, which counts since boot
+and is never reset. The kernel workflow deadline is also anchored when the
+final stage calls `setworkflow` (now + deadline), later than `wfgen`'s start
+time, which is taken before forking. The host therefore computes
+miss = 1 if finish > deadline, with the same rule for every policy. The
+kernel value is stored in the `miss_kernel` column and is not used in
+analysis.
+
+### Deadline rule
+
+deadline = round(α × W) with half-up rounding, W = 24.4 ticks. The six α
+values 1.0, 1.25, 1.5, 2.0, 2.5, 3.0 give deadlines 24, 31, 37, 49, 61, 73.
+The main α is 1.5 (deadline 37).
+
+### Harness changes (`run_all.py`, 043a34b)
+
+- The QEMU machine flag comes from `host/config.json` `qemu_extra`. With the
+  default machine type xv6 starts only cpu0; with
+  `-machine pc-i440fx-yakkety` it starts cpu0-cpu2 (L-24, resolved). This
+  supersedes the Stage 6 note above that CPUS=3 is blocked.
+- `--runs`, `--alphas` and `--cpus` select the cells; the deadline for each
+  cell is round(α × W), half-up.
+- α is part of each raw log name (`{policy}_cpus{c}_a{alpha}_run{n}.raw`)
+  and of the resume key, so cells never overwrite each other.
+- The CSV keeps the Stage 6 columns in order and appends `miss_kernel`;
+  `miss` is the host rule.
+- The harness aborts if tracked files are modified, so `commit_hash`
+  describes the tree that produced the data; it also refuses to append to a
+  CSV with a different header and checks that every guest command line is
+  shorter than the shell limit.
+- `host/harness/analyze.py` keeps only `success` rows, reports drops per
+  cell, recomputed-miss mismatches and duplicate keys, and computes a
+  percentile bootstrap interval (10000 resamples, seed 20261104) and a
+  two-sided Fisher exact test of edf against edf_donate. The manual Fisher
+  implementation is cross-checked with scipy in the tests.
+- `host/plots/plot_results.py` writes a `.sources.txt` sidecar next to each
+  graph, and `tools/index_evidence.py` turns the sidecars into the Stage 7
+  section of `EVIDENCE_INDEX.md`.
+
+### AdaptivePlanner (`host/planners/adaptive.py`)
+
+The planner makes every decision in plain code over integers parsed from
+the `RESULT` line; it ignores the request text and never uses model output.
+A step is one decision phase, and there are at most three:
+
+1. Pilot: `set_policy rr`, then `run_pipeline` with the configured workload.
+   If finish <= deadline the planner stops (decision `stop`); otherwise it
+   records decision `switch`.
+2. Rerun: `set_policy edf_donate`, then the same `run_pipeline` (decision
+   `compare`).
+3. Compare: a host-only `summarize` action whose text is built from the
+   parsed integers (decision `done`, with `finish_delta`).
+
+The planner aborts instead of retrying when the validator rejects an
+action, a guest command fails, the output has no single `RESULT` line, or
+the `RESULT` policy or deadline differs from what was sent. Each decision is
+written to `logs/audit.jsonl` through the existing `AuditLog`, next to the
+per-tool records written by `AgentLoop`. The agent's `QemuBridge` ignores
+`qemu_extra`, so the adaptive agent runs on the default machine with CPUS=1
+(L-32).
