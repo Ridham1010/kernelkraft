@@ -1,0 +1,13 @@
+policy,cpus,run,alpha,finish,deadline,miss,status,commit_hash,rawlog_path
+rr,1,1,1.5,89,72,1,ok,7fba9fae,logs/stage7rev-pilot/rr_cpus1_a1.5_run1.raw
+rr,1,2,1.5,90,72,1,ok,7fba9fae,logs/stage7rev-pilot/rr_cpus1_a1.5_run2.raw
+rr,3,1,1.5,52,72,0,ok,7fba9fae,logs/stage7rev-pilot/rr_cpus3_a1.5_run1.raw
+rr,3,2,1.5,52,72,0,ok,7fba9fae,logs/stage7rev-pilot/rr_cpus3_a1.5_run2.raw
+edf,1,1,1.5,89,72,1,ok,7fba9fae,logs/stage7rev-pilot/edf_cpus1_a1.5_run1.raw
+edf,1,2,1.5,81,72,1,ok,7fba9fae,logs/stage7rev-pilot/edf_cpus1_a1.5_run2.raw
+edf,3,1,1.5,55,72,0,ok,7fba9fae,logs/stage7rev-pilot/edf_cpus3_a1.5_run1.raw
+edf,3,2,1.5,49,72,0,ok,7fba9fae,logs/stage7rev-pilot/edf_cpus3_a1.5_run2.raw
+edf_donate,1,1,1.5,49,72,0,ok,7fba9fae,logs/stage7rev-pilot/edf_donate_cpus1_a1.5_run1.raw
+edf_donate,1,2,1.5,49,72,0,ok,7fba9fae,logs/stage7rev-pilot/edf_donate_cpus1_a1.5_run2.raw
+edf_donate,3,1,1.5,48,72,0,ok,7fba9fae,logs/stage7rev-pilot/edf_donate_cpus3_a1.5_run1.raw
+edf_donate,3,2,1.5,55,72,0,ok,7fba9fae,logs/stage7rev-pilot/edf_donate_cpus3_a1.5_run2.raw

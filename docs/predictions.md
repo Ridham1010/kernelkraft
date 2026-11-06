@@ -40,3 +40,34 @@ same commit; no pilot row is counted in the results.
    and they run ahead of the hogs.
 6. Adaptive agent with a tight deadline: the rr pilot misses, the planner
    switches to edf_donate, and the rerun meets the deadline.
+## Revision 2 (2026-11-06), committed before the second batch
+
+The first batch was run with a workload that did not match PLAN.md (bytes 1024
+below 4 x PIPESIZE, wfgen miss taken from the cumulative kernel counter, clock
+started before the hogs, a different alpha set). It is archived in
+results/archive_v1/. These predictions are for the PLAN-conformant batch.
+
+Disclosure: informed by the archived first batch and by a pilot on 2026-11-06
+(results/pilot_rev.csv, logs/stage7rev-pilot/, 2 runs per cell at alpha 1.5).
+No pilot row is counted in the results.
+
+Setup: wfgen 4 100 2048 <deadline> <hogs>; hogs 3 (CPUS=1), 5 (CPUS=3);
+machine flag -machine pc-i440fx-yakkety. W = 48.2 ticks (CPUS=1, zero hogs,
+5 runs, SD 2.59, logs/stage7rev-calibration/). deadline = round(alpha * W),
+half-up: alpha 1.2, 1.5, 2.0, 3.0 give 58, 72, 96, 145. Main alpha 1.5.
+Miss = finish > deadline, now computed by wfgen itself.
+
+1. CPUS=1, alpha 1.5, 20 runs: rr and edf miss in at least 18/20 each;
+   edf_donate misses in at most 2/20.
+2. CPUS=3, alpha 1.5: all three policies miss in at most 2/20, and the
+   edf vs edf_donate difference is not significant. Reason: 9 processes on
+   3 CPUs give the upstream stages enough CPU without donation.
+3. Sweep (CPUS=1, 10 runs per cell): edf_donate misses at most 1/10 at every
+   alpha from 1.2; rr and edf miss in most runs at 1.2 and 1.5, in some runs
+   at 2.0, and in none at 3.0.
+4. Gantt, edf: stages 1 to 3 share the CPU with the hogs while the final
+   stage waits on its pipe.
+5. Gantt, edf_donate: DONATE events appear just before stages 1 to 3 run,
+   and the hogs run only after the pipeline finishes.
+6. Adaptive agent at alpha 1.5: the rr pilot misses, the planner switches to
+   edf_donate, and the rerun meets the deadline.
