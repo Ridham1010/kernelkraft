@@ -53,7 +53,8 @@ def test_config_matches_plan():
     config = load_config()
     assert config["alpha_values"] == [1.2, 1.5, 2.0, 3.0]
     assert config["alpha"] == 1.5
-    assert config["W_ticks"] is None
+    # Only the key is checked: its value changes with each recalibration.
+    assert "W_ticks" in config
     assert config["MIN_PIPELINE_BYTES"] == 2048
     assert config["harness_workload"]["bytes"] >= config["MIN_PIPELINE_BYTES"]
     assert tuple(run_all.FIELDNAMES) == (
@@ -137,8 +138,9 @@ def _no_qemu(monkeypatch):
 
 
 def test_main_refuses_null_w_ticks(monkeypatch, tmp_path):
-    # The real config (W_ticks null) must stop before git or QEMU.
-    project = _project(tmp_path, load_config())
+    # W_ticks null (set explicitly, not read from the file) must stop
+    # before git or QEMU.
+    project = _project(tmp_path, _config(W_ticks=None))
     monkeypatch.setattr(run_all.subprocess, "run",
                         lambda *a, **k: pytest.fail("git must not run"))
     _no_qemu(monkeypatch)

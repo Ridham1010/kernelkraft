@@ -1,3 +1,5 @@
+Superseded by docs/results_template.md (PLAN-conformant batch); this file describes the archived first batch.
+
 # Stage 7 results
 
 ## Parameters

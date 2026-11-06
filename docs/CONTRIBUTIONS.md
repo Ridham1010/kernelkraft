@@ -8,3 +8,4 @@
 | Team | Stage 4 admission control, firm deadlines, workflow generator, injection demo, and documentation |
 | Team | Stage 5 pipe donation, cycle-safe traversal, withdrawal recomputation, procinfo/tracectl, tests, and documentation |
 | Team | Stage 6 trace ring, rdtsc timestamps, schedtrace/tracectl syscalls, wfgen/schedtrace/calib user programs, harness, Gantt plotter, and documentation |
+| Team | Stage 7 measurement harness sweep, analysis (bootstrap, Fisher), result plots, adaptive planner, dl_before fix, PLAN alignment rerun, and documentation |

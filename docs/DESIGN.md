@@ -292,6 +292,8 @@ The `wfgen` (workflow generator) program creates multi-stage pipelines with conf
 4. Stages 2-6 are supported; each stage forwards the pipe data and performs its configured work
 5. Parent waits for all children, kills hogs, and prints a single `RESULT` line with: policy, cpus, finish time, deadline, miss count
 
+Superseded in Stage 7 (066060f): wfgen now reports miss = finish > deadline and starts its clock after forking the hogs; see DESIGN.md Stage 7.
+
 The `RESULT` line is built in a buffer and emitted with a single `write()` to avoid interleaving with other processes' output.
 
 **Hygiene:** All file descriptors are properly closed in each process. Hog processes are killed and waited on to avoid zombies.
@@ -398,22 +400,32 @@ exceptions.
 
 ### Host miss rule
 
-The kernel's `RESULT miss=` field is `global_misses`, which counts since boot
-and is never reset. The kernel workflow deadline is also anchored when the
-final stage calls `setworkflow` (now + deadline), later than `wfgen`'s start
-time, which is taken before forking. The host therefore computes
-miss = 1 if finish > deadline, with the same rule for every policy. The
-kernel value is stored in the `miss_kernel` column and is not used in
-analysis.
+Since 066060f, `wfgen` decides the miss itself. The parent creates the
+pipes, forks the hogs, records `t_start = uptime()` and then forks the
+stages. The final stage computes finish = `uptime() - t_start` and prints
+miss = 1 if finish > deadline in its single-write `RESULT` line, with the
+same rule for every policy. The harness checks that the parsed miss equals
+finish > deadline and records status `bad_result` if it does not;
+`harness/analyze.py` recomputes the rule on every `ok` row and reports any
+disagreement. The kernel's cumulative `global_misses` counter is no longer
+used. The kernel workflow deadline is still anchored when the final stage
+calls `setworkflow` (now + deadline); this affects only kernel-side
+DEADLINE_MISS events and firm demotion (L-31, resolved). The archived first
+batch took `RESULT miss=` from the kernel counter and stored it as
+`miss_kernel`.
 
 ### Deadline rule
 
-deadline = round(α × W) with half-up rounding, W = 24.4 ticks. The six α
-values 1.0, 1.25, 1.5, 2.0, 2.5, 3.0 give deadlines 24, 31, 37, 49, 61, 73.
-The main α is 1.5 (deadline 37).
+deadline = round(α × W) with half-up rounding, W = 48.2 ticks (7fba9fa,
+`logs/stage7rev-calibration/`). The four α values 1.2, 1.5, 2.0, 3.0 give
+deadlines 58, 72, 96, 145, all inside PLAN's window W < D < (h+1)W (48.2 to
+192.8 ticks for h = 3). The main α is 1.5 (deadline 72).
 
-### Harness changes (`run_all.py`, 043a34b)
+### Harness and analysis (`harness/`, 043a34b, aligned in 066060f)
 
+- `harness/run_all.py` and `harness/analyze.py` live at the repository root
+  as PLAN section 6 lays out; graphs are written to `results/`. The
+  `--output` default is `results/results.csv`.
 - The QEMU machine flag comes from `host/config.json` `qemu_extra`. With the
   default machine type xv6 starts only cpu0; with
   `-machine pc-i440fx-yakkety` it starts cpu0-cpu2 (L-24, resolved). This
@@ -421,21 +433,36 @@ The main α is 1.5 (deadline 37).
 - `--runs`, `--alphas` and `--cpus` select the cells; the deadline for each
   cell is round(α × W), half-up.
 - α is part of each raw log name (`{policy}_cpus{c}_a{alpha}_run{n}.raw`)
-  and of the resume key, so cells never overwrite each other.
-- The CSV keeps the Stage 6 columns in order and appends `miss_kernel`;
-  `miss` is the host rule.
-- The harness aborts if tracked files are modified, so `commit_hash`
-  describes the tree that produced the data; it also refuses to append to a
-  CSV with a different header and checks that every guest command line is
-  shorter than the shell limit.
-- `host/harness/analyze.py` keeps only `success` rows, reports drops per
-  cell, recomputed-miss mismatches and duplicate keys, and computes a
-  percentile bootstrap interval (10000 resamples, seed 20261104) and a
-  two-sided Fisher exact test of edf against edf_donate. The manual Fisher
-  implementation is cross-checked with scipy in the tests.
+  and of the resume key, so cells never overwrite each other. `--resume`
+  skips only rows with status `ok`.
+- The CSV has exactly the ten PLAN columns
+  `policy,cpus,run,alpha,finish,deadline,miss,status,commit_hash,rawlog_path`.
+  A good run has status `ok`; the other statuses are `timeout`, `panic`,
+  `no_result`, `bad_result` and `error`.
+- Before any QEMU launch the harness refuses to start while `W_ticks` is
+  null, when `harness_workload.bytes` is below `MIN_PIPELINE_BYTES` (2048,
+  so bytes ≥ 4 × PIPESIZE), and when tracked files are modified, so
+  `commit_hash` describes the tree that produced the data. It also refuses
+  to append to a CSV with a different header and checks that every guest
+  command line is shorter than the shell limit.
+- `harness/analyze.py` keeps only `ok` rows, reports drops per cell,
+  miss mismatches and duplicate keys, and computes a percentile bootstrap
+  interval (10000 resamples, seed 20261104) and a two-sided Fisher exact
+  test of edf against edf_donate. The manual Fisher implementation is
+  cross-checked with scipy in the tests. `--fill-template` writes the
+  tables of `docs/results_template.md`.
 - `host/plots/plot_results.py` writes a `.sources.txt` sidecar next to each
-  graph, and `tools/index_evidence.py` turns the sidecars into the Stage 7
-  section of `EVIDENCE_INDEX.md`.
+  graph in `results/`, and `tools/index_evidence.py` turns the sidecars into
+  the Stage 7 section of `EVIDENCE_INDEX.md`.
+
+### Archive
+
+The first Stage 7 batch (`commit_hash` 043a34b5, `wfgen 4 100 1024`,
+W = 24.4, α 1.0 to 3.0) did not match PLAN.md and is kept unchanged in
+`results/archive_v1/` with a README. Its raw logs remain in
+`logs/run_20261104/`, `logs/smoke_20261104/` and
+`logs/order_check_20261104/`; the paths inside its sidecars refer to the
+pre-archive locations.
 
 ### AdaptivePlanner (`host/planners/adaptive.py`)
 
@@ -452,8 +479,10 @@ A step is one decision phase, and there are at most three:
    parsed integers (decision `done`, with `finish_delta`).
 
 The planner aborts instead of retrying when the validator rejects an
-action, a guest command fails, the output has no single `RESULT` line, or
-the `RESULT` policy or deadline differs from what was sent. Each decision is
+action, a guest command fails, the output has no single `RESULT` line,
+the `RESULT` policy or deadline differs from what was sent, or the `RESULT`
+miss field disagrees with finish > deadline. The agent refuses to start
+while `W_ticks` is null. Each decision is
 written to `logs/audit.jsonl` through the existing `AuditLog`, next to the
 per-tool records written by `AgentLoop`. The agent's `QemuBridge` ignores
 `qemu_extra`, so the adaptive agent runs on the default machine with CPUS=1

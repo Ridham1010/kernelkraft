@@ -31,8 +31,8 @@ def agent(monkeypatch):
 
 
 def test_adaptive_agent_refuses_null_w_ticks(agent):
-    config = load_config()
-    assert config["W_ticks"] is None
+    # Set explicitly so the test does not depend on the live config value.
+    config = dict(load_config(), W_ticks=None)
     with pytest.raises(SystemExit) as excinfo:
         agent.adaptive_workload(config, 1.5, 1)
     assert "W_ticks is null" in str(excinfo.value)
