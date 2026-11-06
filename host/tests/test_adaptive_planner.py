@@ -20,14 +20,21 @@ class FakeBridge:
         self.policy = "rr"
         self.calls = []
 
+    @staticmethod
+    def miss_for(finish, deadline):
+        # wfgen's rule: miss = finish > deadline.
+        return 1 if finish > deadline else 0
+
     def run(self, argv):
         self.calls.append(argv)
         if argv[0] == "schedctl":
             self.policy = argv[1]
             return Observation(self.status, "", 0.01)
         if argv[0] == "wfgen":
-            output = "RESULT policy=%d cpus=1 finish=%d deadline=%s miss=4\n" % (
-                POLICY_NUMBER[self.policy], self.finish_by_policy[self.policy], argv[4])
+            finish = self.finish_by_policy[self.policy]
+            miss = self.miss_for(finish, int(argv[4]))
+            output = "RESULT policy=%d cpus=1 finish=%d deadline=%s miss=%d\n" % (
+                POLICY_NUMBER[self.policy], finish, argv[4], miss)
             return Observation(self.status, output, 0.01)
         raise AssertionError("unexpected guest command %r" % argv)
 
@@ -67,11 +74,26 @@ def test_no_miss_stops_after_pilot(tmp_path):
     assert decisions[0]["host_miss"] == 0
 
 
-def test_kernel_miss_counter_is_ignored(tmp_path):
-    # miss=4 in every RESULT line; only finish > deadline matters.
-    bridge = FakeBridge({"rr": 20, "edf_donate": 20})
+def test_inconsistent_miss_aborts(tmp_path):
+    # RESULT says miss=0 although finish 50 > deadline 37: do not trust it.
+    class LyingBridge(FakeBridge):
+        @staticmethod
+        def miss_for(finish, deadline):
+            return 0
+
+    bridge = LyingBridge({"rr": 50, "edf_donate": 30})
     _, _, _, decisions = run(tmp_path, bridge)
-    assert decisions[0]["decision"] == "stop"
+    assert [d["decision"] for d in decisions] == ["abort"]
+    assert "disagrees" in decisions[0]["reason"]
+    assert len(bridge.calls) == 2
+
+
+def test_parsed_fields_have_no_miss_kernel(tmp_path):
+    bridge = FakeBridge({"rr": 50, "edf_donate": 30})
+    _, _, records, decisions = run(tmp_path, bridge)
+    assert set(decisions[0]["parsed"]) == {"policy", "cpus", "finish", "deadline", "miss"}
+    assert decisions[0]["parsed"]["miss"] == decisions[0]["host_miss"] == 1
+    assert not any("miss_kernel" in json.dumps(r) for r in records)
 
 
 def test_never_more_than_three_steps(tmp_path):

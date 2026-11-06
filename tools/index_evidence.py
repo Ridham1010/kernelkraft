@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Generate the Stage 7 section of docs/EVIDENCE_INDEX.md from graph sidecars.
 
-Reads every <graph>.sources.txt written by host/plots/plot_results.py and
+Reads every <graph>.sources.txt that host/plots/plot_results.py writes into
+results/ (the default --plots-dir; not recursive, so results/archive_v1/ is
+not indexed) and
 emits one table row per graph: graph -> CSV path -> raw-log directory ->
 commit hash. Output goes either to a separate file (--out) or into an index
 file (--index) strictly between the stage7 markers; text outside the
@@ -15,6 +17,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 BEGIN = "<!-- stage7:begin -->"
 END = "<!-- stage7:end -->"
+DEFAULT_PLOTS_DIR = ROOT / "results"
 
 
 def parse_sidecar(path):
@@ -81,7 +84,7 @@ def merge_section(existing, section):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--plots-dir", default=str(ROOT / "host" / "plots"))
+    parser.add_argument("--plots-dir", default=str(DEFAULT_PLOTS_DIR))
     target = parser.add_mutually_exclusive_group(required=True)
     target.add_argument("--out", help="write only the section to this file")
     target.add_argument("--index", help="update this index between the stage7 markers "

@@ -15,23 +15,23 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from host.config import alpha_label, deadline_for_alpha
+from host.config import alpha_label, deadline_for_alpha, require_w_ticks
 from host.validator import ValidationError, validate_action
 
 POLICIES = ("rr", "edf", "edf_donate")
 CPUS_LIST = (1, 3)
 RUNS_PER_CELL = 20
 DRY_RUNS_PER_CELL = 2
-# miss_kernel is appended last so older readers that index the first ten
-# columns keep working.
+# Exactly the PLAN Stage 6/7 columns.
 FIELDNAMES = (
     "policy", "cpus", "run", "alpha", "finish", "deadline", "miss",
-    "status", "commit_hash", "rawlog_path", "miss_kernel",
+    "status", "commit_hash", "rawlog_path",
 )
+OK = "ok"
 RESULT_REGEX = re.compile(
     r"^RESULT policy=(\d+) cpus=(\d+) finish=(\d+) "
     r"deadline=(\d+) miss=(\d+)\r?$", re.MULTILINE
@@ -166,15 +166,28 @@ def parse_result(output, policy, cpus, deadline=None):
     # line does not belong to the command this harness sent.
     if deadline is not None and result[3] != deadline:
         return None
-    return {
-        "finish": result[2],
-        "deadline": result[3],
-        # Host miss rule, identical for every policy. The kernel counter is
-        # cumulative per boot and starts its clock at the final stage's
-        # setworkflow, so it is kept only as miss_kernel.
-        "miss": 1 if result[2] > result[3] else 0,
-        "miss_kernel": result[4],
-    }
+    # wfgen computes miss = finish > deadline itself; main() verifies it.
+    return {"finish": result[2], "deadline": result[3], "miss": result[4]}
+
+
+def miss_consistent(result):
+    """True if the RESULT miss field equals the rule finish > deadline."""
+    return result["miss"] == (1 if result["finish"] > result["deadline"] else 0)
+
+
+def check_preflight(config):
+    """Refuse to start on an uncalibrated or too-small workload."""
+    require_w_ticks(config, "the harness")
+    minimum = config.get("MIN_PIPELINE_BYTES")
+    if minimum is None:
+        raise SystemExit("Refusing to start: MIN_PIPELINE_BYTES is missing "
+                         "from host/config.json.")
+    workload_bytes = config["harness_workload"]["bytes"]
+    if workload_bytes < minimum:
+        raise SystemExit(
+            "Refusing to start: harness_workload.bytes = {} is below "
+            "MIN_PIPELINE_BYTES = {} (PLAN: bytes >= 4 x PIPESIZE, so the "
+            "pipes really fill and stages block).".format(workload_bytes, minimum))
 
 
 def run_qemu(project_root, xv6_dir, qemu_bin, policy, cpus, workload,
@@ -234,7 +247,7 @@ def run_qemu(project_root, xv6_dir, qemu_bin, policy, cpus, workload,
     text = "".join(output)
     rawlog.write_text(text, encoding="utf-8")
     if result_seen:
-        return text, "success"
+        return text, OK
     if "panic" in text.lower():
         return text, "panic"
     if time.monotonic() - started >= timeout:
@@ -254,7 +267,6 @@ def result_row(policy, cpus, run, alpha, commit_hash, rawlog, result, status):
         "status": status,
         "commit_hash": commit_hash,
         "rawlog_path": str(rawlog),
-        "miss_kernel": "" if result is None else result["miss_kernel"],
     }
 
 
@@ -282,7 +294,7 @@ def main(argv=None):
     parser.add_argument("--cpus", default=None,
                         help="comma-separated CPU counts (default: config cpus_allowed)")
     parser.add_argument("--resume", action="store_true",
-                        help="skip rows already present in the output CSV")
+                        help="skip rows with status ok already in the output CSV")
     parser.add_argument("--allow-dirty", action="store_true",
                         help="run even if tracked files are modified (testing only)")
     parser.add_argument("--output", default="results.csv")
@@ -298,6 +310,7 @@ def main(argv=None):
     qemu_bin = config.get("qemu_bin")
     xv6_dir = config["xv6_dir"]
 
+    check_preflight(config)
     if args.runs is not None and args.runs < 1:
         raise SystemExit("--runs must be >= 1")
     if args.dry_run:
@@ -340,7 +353,7 @@ def main(argv=None):
     if args.resume and file_exists:
         with csv_path.open(newline="", encoding="utf-8") as csv_file:
             for row in csv.DictReader(csv_file):
-                if row.get("status") == "success":
+                if row.get("status") == OK:
                     completed.add((row["policy"], int(row["cpus"]),
                                    alpha_label(row["alpha"]), int(row["run"])))
 
@@ -370,8 +383,14 @@ def main(argv=None):
                                 workload, rawlog, args.timeout, qemu_extra)
                             result = parse_result(output, policy, cpus,
                                                   workload["deadline"])
-                            if status == "success" and result is None:
+                            if status == OK and result is None:
                                 status = "no_result"
+                            elif status == OK and not miss_consistent(result):
+                                log("RESULT miss={} but finish={} deadline={}; "
+                                    "bad_result".format(result["miss"],
+                                                        result["finish"],
+                                                        result["deadline"]))
+                                status = "bad_result"
                         except (OSError, subprocess.SubprocessError) as error:
                             log("Run failed: {}".format(error))
                             result = None

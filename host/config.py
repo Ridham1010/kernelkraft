@@ -28,3 +28,17 @@ def deadline_for_alpha(alpha, w_ticks):
 def alpha_label(alpha):
     """Canonical text for an alpha value in CSV cells, log names and keys."""
     return str(float(alpha))
+
+
+def require_w_ticks(config, who):
+    """Return W_ticks as a float, or stop with a clear message if it is unset.
+
+    W_ticks is null until the team recalibrates the PLAN workload; nothing
+    that derives a deadline from it may run before then.
+    """
+    w_ticks = config.get("W_ticks")
+    if w_ticks is None:
+        raise SystemExit(
+            "W_ticks is null in host/config.json; recalibrate (PLAN Stage 6) "
+            "and set it before running {}.".format(who))
+    return float(w_ticks)

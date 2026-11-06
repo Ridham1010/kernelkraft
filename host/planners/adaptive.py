@@ -1,7 +1,9 @@
 """Adaptive planner: rr pilot, switch to edf_donate on a miss, compare.
 
 Every decision is plain code over integers parsed from the RESULT line; the
-request text and any model output are ignored. A "step" is one decision
+request text and any model output are ignored. The RESULT miss field (which
+wfgen computes as finish > deadline) is used only after it is checked
+against finish > deadline; a disagreement aborts. A "step" is one decision
 phase: 1 = pilot under rr, 2 = rerun under edf_donate, 3 = comparison. Each
 phase writes one record through the existing AuditLog, in addition to the
 per-tool records AgentLoop writes.
@@ -30,12 +32,12 @@ def parse_result(output):
     matches = RESULT_LINE.findall(output.replace("\r", ""))
     if len(matches) != 1:
         return None
-    keys = ("policy", "cpus", "finish", "deadline", "miss_kernel")
+    keys = ("policy", "cpus", "finish", "deadline", "miss")
     return dict(zip(keys, (int(value) for value in matches[0])))
 
 
 def host_miss(fields):
-    """Host miss rule shared with the harness: finish > deadline."""
+    """Cross-check rule shared with the harness: finish > deadline."""
     return 1 if fields["finish"] > fields["deadline"] else 0
 
 
@@ -120,9 +122,13 @@ class AdaptivePlanner(Planner):
             return self._stop(phase, policy, fields, "abort",
                               "RESULT deadline=%d, sent %d" % (fields["deadline"],
                                                                self.workload["deadline"]))
+        if fields["miss"] != host_miss(fields):
+            return self._stop(phase, policy, fields, "abort",
+                              "RESULT miss=%d disagrees with finish>deadline (%d > %d)"
+                              % (fields["miss"], fields["finish"], fields["deadline"]))
         self.runs[phase] = fields
         if phase == "pilot":
-            if not host_miss(fields):
+            if not fields["miss"]:
                 return self._stop(phase, policy, fields, "stop",
                                   "pilot met the deadline (finish %d <= %d)"
                                   % (fields["finish"], fields["deadline"]))
@@ -139,12 +145,12 @@ class AdaptivePlanner(Planner):
 
     def _compare(self):
         pilot, rerun = self.runs["pilot"], self.runs["rerun"]
-        improved = host_miss(rerun) < host_miss(pilot)
+        improved = rerun["miss"] < pilot["miss"]
         # The summary is built only from parsed integers, never model text.
         text = ("adaptive: %s finish=%d miss=%d; %s finish=%d miss=%d; "
                 "deadline=%d; switch %s" % (
-                    PILOT_POLICY, pilot["finish"], host_miss(pilot),
-                    SWITCH_POLICY, rerun["finish"], host_miss(rerun),
+                    PILOT_POLICY, pilot["finish"], pilot["miss"],
+                    SWITCH_POLICY, rerun["finish"], rerun["miss"],
                     pilot["deadline"], "helped" if improved else "did not help"))
         self._record("compare", SWITCH_POLICY,
                      {"pilot_finish": pilot["finish"], "rerun_finish": rerun["finish"],

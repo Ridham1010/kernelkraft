@@ -2,16 +2,16 @@
 """Summarise harness results: miss rates, bootstrap CIs, Fisher exact test.
 
 Rules (nothing else is dropped, smoothed or altered):
-  * only rows with status == "success" are analysed; the others are counted
-    per (policy, cpus, alpha) cell and reported with their statuses;
-  * miss is recomputed as finish > deadline (the host rule); rows whose miss
-    column disagrees are reported, and the recomputed value is what the
-    statistics use, because the host rule is the definition of a miss;
-  * duplicate (policy, cpus, alpha, run) keys are reported and all success
-    rows are kept;
-  * a success row without integer finish/deadline cannot be analysed; it is
+  * only rows with status == "ok" are analysed; the others (timeout, panic,
+    no_result, bad_result, error, ...) are counted per (policy, cpus, alpha)
+    cell and reported with their statuses;
+  * miss is recomputed as finish > deadline (the PLAN rule, which wfgen also
+    applies); ok rows whose miss column disagrees are reported, and the
+    recomputed value is what the statistics use;
+  * duplicate (policy, cpus, alpha, run) keys are reported and all ok rows
+    are kept;
+  * an ok row without integer finish/deadline cannot be analysed; it is
     reported as unparseable rather than skipped silently.
-miss_kernel is never used.
 """
 
 import argparse
@@ -24,14 +24,15 @@ import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from host.config import alpha_label, deadline_for_alpha
 
 POLICIES = ("rr", "edf", "edf_donate")
-SUCCESS = "success"
+OK = "ok"
+DEFAULT_TEMPLATE = ROOT / "docs" / "results_template.md"
 BOOTSTRAP_RESAMPLES = 10000
 BOOTSTRAP_SEED = 20261104
 CI_LEVEL = 0.95
@@ -136,7 +137,7 @@ def fisher_exact(table):
 def analyze(rows, main_alpha):
     """Apply the rules above and return a dict of results and reports."""
     dropped = defaultdict(Counter)
-    success = defaultdict(list)
+    ok_rows = defaultdict(list)
     mismatches = []
     unparseable = []
     key_rows = defaultdict(list)
@@ -144,7 +145,7 @@ def analyze(rows, main_alpha):
     for index, row in enumerate(rows, start=1):
         key = cell_key(row)
         key_rows[key + (int(row["run"]),)].append((index, row["status"]))
-        if row["status"] != SUCCESS:
+        if row["status"] != OK:
             dropped[key][row["status"] or "(empty)"] += 1
             continue
         finish = _int_or_none(row.get("finish"))
@@ -159,7 +160,7 @@ def analyze(rows, main_alpha):
                 "run": row["run"], "finish": finish, "deadline": deadline,
                 "miss_column": row.get("miss"), "host_miss": host_miss,
             })
-        success[key].append({
+        ok_rows[key].append({
             "finish": finish, "deadline": deadline, "miss": host_miss, "row": row,
         })
 
@@ -167,13 +168,13 @@ def analyze(rows, main_alpha):
     for key, entries in sorted(key_rows.items(),
                                key=lambda item: cell_sort_key(item[0][:3]) + (item[0][3],)):
         if len(entries) > 1:
-            successes = sum(1 for _, status in entries if status == SUCCESS)
+            oks = sum(1 for _, status in entries if status == OK)
             duplicates.append({"key": key, "entries": entries,
-                               "multiple_success": successes > 1})
+                               "multiple_ok": oks > 1})
 
     summary = []
-    for key in sorted(set(success) | set(dropped), key=cell_sort_key):
-        entries = success.get(key, [])
+    for key in sorted(set(ok_rows) | set(dropped), key=cell_sort_key):
+        entries = ok_rows.get(key, [])
         outcomes = [entry["miss"] for entry in entries]
         finishes = [entry["finish"] for entry in entries]
         deadlines = sorted({entry["deadline"] for entry in entries})
@@ -198,9 +199,9 @@ def analyze(rows, main_alpha):
 
     fisher = []
     main_label = alpha_label(main_alpha)
-    for cpus in sorted({key[1] for key in success if key[2] == main_label}):
-        edf = success.get(("edf", cpus, main_label), [])
-        donate = success.get(("edf_donate", cpus, main_label), [])
+    for cpus in sorted({key[1] for key in ok_rows if key[2] == main_label}):
+        edf = ok_rows.get(("edf", cpus, main_label), [])
+        donate = ok_rows.get(("edf_donate", cpus, main_label), [])
         if not edf or not donate:
             continue
         edf_miss = sum(entry["miss"] for entry in edf)
@@ -212,12 +213,12 @@ def analyze(rows, main_alpha):
                        "p_value": p_value, "method": method})
 
     commits = sorted({entry["row"].get("commit_hash", "")
-                      for entries in success.values() for entry in entries})
+                      for entries in ok_rows.values() for entry in entries})
     return {
         "summary": summary, "dropped": dropped, "mismatches": mismatches,
         "unparseable": unparseable, "duplicates": duplicates,
         "fisher": fisher, "main_alpha": main_label, "commits": commits,
-        "success": success,
+        "ok": ok_rows,
     }
 
 
@@ -278,7 +279,7 @@ def _fisher_lines(result):
 def _quality_lines(result):
     lines = []
     total_dropped = sum(sum(c.values()) for c in result["dropped"].values())
-    lines.append("- Non-success rows dropped: {}".format(total_dropped))
+    lines.append("- Non-ok rows dropped: {}".format(total_dropped))
     for key in sorted(result["dropped"], key=cell_sort_key):
         statuses = ", ".join("{} x{}".format(s, n)
                              for s, n in sorted(result["dropped"][key].items()))
@@ -289,7 +290,7 @@ def _quality_lines(result):
         lines.append("  - data row {row}: {policy} cpus={cpus} alpha={alpha} run={run} "
                      "finish={finish} deadline={deadline} miss column={miss_column} "
                      "host rule={host_miss}".format(**item))
-    lines.append("- Success rows without integer finish/deadline (not analysed): {}".format(
+    lines.append("- ok rows without integer finish/deadline (not analysed): {}".format(
         len(result["unparseable"])))
     for index, row in result["unparseable"]:
         lines.append("  - data row {}: {}".format(index, dict(row)))
@@ -298,7 +299,7 @@ def _quality_lines(result):
     for item in result["duplicates"]:
         policy, cpus, alpha, run = item["key"]
         entries = ", ".join("data row {} {}".format(i, s) for i, s in item["entries"])
-        flag = " (more than one success row; all kept)" if item["multiple_success"] else ""
+        flag = " (more than one ok row; all kept)" if item["multiple_ok"] else ""
         lines.append("  - {} cpus={} alpha={} run={}: {}{}".format(
             policy, cpus, alpha, run, entries, flag))
     return lines
@@ -308,8 +309,8 @@ def write_summary_md(result, path, input_path):
     lines = [
         "# Stage 7 summary",
         "",
-        "Generated by host/harness/analyze.py from `{}`.".format(input_path),
-        "Miss rule: miss = 1 if finish > deadline (host-computed); miss_kernel unused.",
+        "Generated by harness/analyze.py from `{}`.".format(input_path),
+        "Miss rule: miss = 1 if finish > deadline (computed by wfgen, rechecked here).",
         "Bootstrap: {} resamples, seed {}, percentile {:.0f}% interval.".format(
             BOOTSTRAP_RESAMPLES, BOOTSTRAP_SEED, CI_LEVEL * 100),
         "Commit hashes in analysed rows: {}".format(", ".join(result["commits"]) or "none"),
@@ -331,9 +332,9 @@ def write_summary_md(result, path, input_path):
 def fill_template(result, path, config):
     """Write the results document with tables only.
 
-    docs/results_template.md does not exist in the tree, so this writes the
-    minimal structure proposed in the Stage 7 report. Explanation and
-    Anomalies stay as empty headings for the team to write by hand.
+    The default target is docs/results_template.md. Explanation and
+    Anomalies stay as empty headings for the team to write by hand. With
+    W_ticks still null (not yet recalibrated) the deadline cell is blank.
     """
     main = result["main_alpha"]
     workload = config.get("harness_workload", {})
@@ -347,7 +348,8 @@ def fill_template(result, path, config):
         "|---|---|---|---|---|---|---|---|",
         "| {} | {} | {} | {} | {} | {} | {} / {} | {} |".format(
             config.get("W_ticks"), main,
-            deadline_for_alpha(main, config["W_ticks"]) if "W_ticks" in config else "",
+            (deadline_for_alpha(main, config["W_ticks"])
+             if config.get("W_ticks") is not None else ""),
             workload.get("stages", ""), workload.get("work", ""),
             workload.get("bytes", ""),
             config.get("hogs_by_cpus", {}).get("1", ""),
@@ -376,8 +378,11 @@ def main(argv=None):
     parser.add_argument("--config", default=str(ROOT / "host" / "config.json"))
     parser.add_argument("--main-alpha", type=float, default=None,
                         help="alpha for the Fisher test (default: config alpha)")
-    parser.add_argument("--fill-template", metavar="OUT", default=None,
-                        help="also write the tables-only results document to OUT")
+    parser.add_argument("--fill-template", metavar="OUT", nargs="?", default=None,
+                        const=str(DEFAULT_TEMPLATE),
+                        help="also write the tables-only results document to OUT "
+                             "(default when given without OUT: {})".format(
+                                 DEFAULT_TEMPLATE.relative_to(ROOT)))
     args = parser.parse_args(argv)
 
     config = json.loads(Path(args.config).read_text(encoding="utf-8"))

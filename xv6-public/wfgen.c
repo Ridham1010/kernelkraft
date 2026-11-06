@@ -75,6 +75,7 @@ run_stage(int stage, int stages, int pipes[MAX_STAGES - 1][2],
   int n;
   int remaining;
   int amount;
+  int finish;
   int result_pos;
   char result[128];
   struct sched_stats stats;
@@ -121,6 +122,7 @@ run_stage(int stage, int stages, int pipes[MAX_STAGES - 1][2],
   if(stage != stages - 1)
     exit();
 
+  finish = uptime() - start;
   if(schedinfo(&stats) < 0)
     exit();
   strcpy(result, "RESULT policy=");
@@ -131,13 +133,15 @@ run_stage(int stage, int stages, int pipes[MAX_STAGES - 1][2],
   result_pos = append_int(result, result_pos, stats.ncpu);
   strcpy(result + result_pos, " finish=");
   result_pos = strlen(result);
-  result_pos = append_int(result, result_pos, uptime() - start);
+  result_pos = append_int(result, result_pos, finish);
   strcpy(result + result_pos, " deadline=");
   result_pos = strlen(result);
   result_pos = append_int(result, result_pos, deadline);
   strcpy(result + result_pos, " miss=");
   result_pos = strlen(result);
-  result_pos = append_int(result, result_pos, stats.misses);
+  // miss is decided here from this run's own times; stats.misses is a
+  // cumulative per-boot counter and cannot describe a single workflow.
+  result_pos = append_int(result, result_pos, finish > deadline ? 1 : 0);
   strcpy(result + result_pos, "\n");
   // One write keeps the machine-readable record intact on xv6's console.
   write(1, result, strlen(result));
@@ -180,9 +184,9 @@ main(int argc, char *argv[])
       printf(1, "wfgen: pipe failed\n");
       exit();
     }
-  start = uptime();
 
-  // Hogs are forked first so they compete with every pipeline stage.
+  // Hogs are forked first so they compete with every pipeline stage; the
+  // clock starts after them so their fork cost is not counted as finish.
   for(i = 0; i < hogs; i++){
     hog_pid[i] = fork();
     if(hog_pid[i] < 0){
@@ -195,6 +199,8 @@ main(int argc, char *argv[])
         burn(work);
     }
   }
+
+  start = uptime();
 
   for(i = 0; i < stages; i++){
     pid = fork();

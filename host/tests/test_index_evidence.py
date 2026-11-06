@@ -21,6 +21,10 @@ def test_append_then_replace_keeps_other_content(tmp_path):
     assert second.count(ie.BEGIN) == 1
 
 
+def test_default_plots_dir_is_results():
+    assert ie.DEFAULT_PLOTS_DIR == ie.ROOT / "results"
+
+
 def test_single_marker_refused():
     with pytest.raises(SystemExit):
         ie.merge_section("x\n" + ie.BEGIN + "\n", "section")

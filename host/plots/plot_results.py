@@ -21,7 +21,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from host.config import alpha_label
-from host.harness.analyze import POLICIES, SUCCESS, read_rows
+from harness.analyze import OK, POLICIES, read_rows
 
 POLICY_COLORS = {"rr": "tab:gray", "edf": "tab:orange", "edf_donate": "tab:blue"}
 
@@ -38,10 +38,10 @@ def read_summary(path):
     return rows
 
 
-def success_rows(results, keep):
-    """Success rows of the harness CSV for which keep(policy, cpus, alpha)."""
+def ok_rows(results, keep):
+    """Status-ok rows of the harness CSV for which keep(policy, cpus, alpha)."""
     return [row for row in results
-            if row["status"] == SUCCESS
+            if row["status"] == OK
             and keep(row["policy"], int(row["cpus"]), alpha_label(row["alpha"]))]
 
 
@@ -97,8 +97,8 @@ def plot_misses_bar(summary, results, main_alpha, inputs, outdir):
     png = outdir / "misses_bar.png"
     fig.savefig(png, dpi=150)
     plt.close(fig)
-    rows = success_rows(results, lambda p, c, a: p in POLICIES and a == main_alpha
-                        and c in cpus_values)
+    rows = ok_rows(results, lambda p, c, a: p in POLICIES and a == main_alpha
+                   and c in cpus_values)
     return png, write_sources(png, inputs, rows)
 
 
@@ -123,12 +123,12 @@ def plot_miss_vs_alpha(summary, results, inputs, outdir, cpus=1):
     png = outdir / "miss_vs_alpha.png"
     fig.savefig(png, dpi=150)
     plt.close(fig)
-    rows = success_rows(results, lambda p, c, a: p in POLICIES and c == cpus)
+    rows = ok_rows(results, lambda p, c, a: p in POLICIES and c == cpus)
     return png, write_sources(png, inputs, rows)
 
 
 def plot_finish_box(results, main_alpha, inputs, outdir):
-    rows = success_rows(results, lambda p, c, a: p in POLICIES and a == main_alpha)
+    rows = ok_rows(results, lambda p, c, a: p in POLICIES and a == main_alpha)
     cpus_values = sorted({int(row["cpus"]) for row in rows})
     fig, axes = plt.subplots(1, max(1, len(cpus_values)),
                              figsize=(5 * max(1, len(cpus_values)), 4), squeeze=False)
@@ -166,7 +166,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("summary_csv")
     parser.add_argument("results_csv")
-    parser.add_argument("--outdir", default=str(ROOT / "host" / "plots"))
+    parser.add_argument("--outdir", default=str(ROOT / "results"))
     parser.add_argument("--config", default=str(ROOT / "host" / "config.json"))
     parser.add_argument("--main-alpha", type=float, default=None,
                         help="alpha for misses_bar and finish_box (default: config alpha)")

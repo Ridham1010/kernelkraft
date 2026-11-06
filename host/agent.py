@@ -4,7 +4,7 @@ import argparse
 
 from audit import AuditLog
 from bridge.qemu_bridge import QemuBridge
-from config import deadline_for_alpha, load_config
+from config import deadline_for_alpha, load_config, require_w_ticks
 from loop import AgentLoop
 from planners.adaptive import AdaptivePlanner
 from planners.deterministic import DeterministicPlanner
@@ -12,9 +12,13 @@ from planners.ollama_planner import OllamaPlanner
 
 
 def adaptive_workload(config, alpha, cpus):
-    """The harness workload with deadline round(alpha * W) and cpus' hogs."""
+    """The harness workload with deadline round(alpha * W) and cpus' hogs.
+
+    Refuses (SystemExit) while W_ticks is null, before any QEMU is started.
+    """
+    w_ticks = require_w_ticks(config, "the adaptive agent")
     workload = {key: config["harness_workload"][key] for key in ("stages", "work", "bytes")}
-    workload["deadline"] = deadline_for_alpha(alpha, config["W_ticks"])
+    workload["deadline"] = deadline_for_alpha(alpha, w_ticks)
     workload["hogs"] = config["hogs_by_cpus"][str(cpus)]
     return workload
 
