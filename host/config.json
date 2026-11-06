@@ -11,23 +11,24 @@
   "MAX_WORK": 1000000,
   "MIN_BYTES": 1,
   "MAX_BYTES": 1000000,
-  "alpha": 1.0,
-  "alpha_values": [1.0, 2.0, 5.0],
+  "MIN_PIPELINE_BYTES": 2048,
+  "alpha": 1.5,
+  "alpha_values": [1.2, 1.5, 2.0, 3.0],
   "hogs_by_cpus": {
     "1": 3,
     "3": 5
   },
   "harness_workload": {
-    "stages": 2,
+    "stages": 4,
     "work": 100,
-    "bytes": 1024,
-    "deadline": 300,
+    "bytes": 2048,
     "hogs": 0
   },
   "xv6_dir": "xv6-public",
   "qemu_bin": null,
+  "qemu_extra": "-machine pc-i440fx-yakkety",
   "cpus_allowed": [1, 3],
   "allowlist": ["/report.txt", "/inbox.txt", "/README"],
   "clamp": false,
-  "W_ticks": 13.6
+  "W_ticks": 48.2
 }

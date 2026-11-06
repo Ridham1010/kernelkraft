@@ -1,0 +1,4 @@
+xrun 0342b731 schedctl edf_donate
+Scheduler policy set to edf_donate
+@@DONE 0342b731
+$ 

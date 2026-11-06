@@ -30,3 +30,56 @@ in [`host/config.json`](../host/config.json).
 |---|---:|---|
 | `TRACE_SIZE` | 256 | Per-CPU trace ring capacity (entries) |
 | `NCPU` | 1 or 3 | Number of CPUs (configured at boot) |
+
+## Stage 7: Final Parameters
+
+These values describe the PLAN-conformant second batch (`results/results.csv`).
+
+| Parameter | Value | Notes |
+|---|---:|---|
+| `W` (ticks per calibrated workload) | 48.2 | Mean of runs 1-5 of `logs/stage7rev-calibration/`: 46, 51, 50, 45, 49 ticks; sample SD 2.59. `wfgen 4 100 2048 300 0`, edf, CPUS=1, zero hogs, machine flag. Run 2 contains a mistyped command (exec fail) before the real one; the measurement is the later `RESULT` line. Stored as `W_ticks` in `host/config.json`. |
+| Deadline rule | round(α × W) | Half-up rounding |
+| Deadline window | W < D < (h+1)W | 48.2 to 192.8 ticks for h = 3; every deadline below lies inside it |
+| `α` (main) | 1.5 | Deadline 72 |
+| `α` (sweep) | 1.2, 1.5, 2.0, 3.0 | CPUS=1 only; `host/config.json` `alpha_values` |
+| `stages` | 4 | `wfgen 4 100 2048 <deadline> <hogs>` |
+| `work` | 100 | CPU work units per stage |
+| `bytes` | 2048 | Pipeline data size; PLAN requires bytes ≥ 4 × PIPESIZE (512) |
+| `MIN_PIPELINE_BYTES` | 2048 | `host/config.json`; the harness refuses to start if `harness_workload.bytes` is below it |
+| `hogs` (CPUS=1) | 3 | `host/config.json` `hogs_by_cpus` |
+| `hogs` (CPUS=3) | 5 | `host/config.json` `hogs_by_cpus` |
+| Runs per cell (main batch) | 20 | 3 policies × CPUS 1, 3 at α = 1.5 |
+| Runs per cell (sweep) | 10 | CPUS=1, all four α values; α = 1.5 runs 1-10 are reused from the main batch. 10 runs per sweep cell instead of 20, as PLAN allows when time is short. |
+| QEMU machine flag | `-machine pc-i440fx-yakkety` | QEMU 10.1.0; carried by `host/config.json` `qemu_extra` and passed by the harness. Without it xv6 starts only cpu0 (see L-24). |
+
+### Stage 7: Deadline per α
+
+| `α` | Deadline (ticks) |
+|---|---:|
+| 1.2 | 58 |
+| 1.5 | 72 |
+| 2.0 | 96 |
+| 3.0 | 145 |
+
+### Stage 7: Commits
+
+| Commit | Content |
+|---|---|
+| 305a13f | Kernel fix: `NO_DEADLINE` ordering in `dl_before` (still in force) |
+| 066060f | Code aligned with PLAN.md: wfgen clock and miss rule, config, `harness/` layout, 10-column CSV, status `ok` |
+| 7fba9fa | W calibration 48.2 ticks (`logs/stage7rev-calibration/`); `W_ticks` set in `host/config.json` |
+| cb7a589 | Predictions Revision 2 and pilot (`results/pilot_rev.csv`, `logs/stage7rev-pilot/`), committed before the batch. Every second-batch row carries `commit_hash` cb7a589b; pilot rows carry 7fba9fae. |
+| d5f9314 | Data: second batch (210 rows), summary, plots, T-57/T-58 traces |
+| f3ab258 | T-59 adaptive agent rerun |
+
+### Archived first batch
+
+The first Stage 7 batch did not match PLAN.md and is archived in `results/archive_v1/` (see its README).
+
+| Parameter | Value |
+|---|---|
+| `W` | 24.4 ticks (runs 2-6 of `logs/stage7-calibration-postfix/`: 23, 27, 27, 22, 23; SD 2.41) |
+| Workload | `wfgen 4 100 1024 <deadline> <hogs>` |
+| `α` (main) | 1.5 (deadline 37) |
+| `α` (sweep) | 1.0, 1.25, 1.5, 2.0, 2.5, 3.0 (deadlines 24, 31, 37, 49, 61, 73) |
+| Commits | 2dcf16c (predictions), 043a34b (code; every row carries `commit_hash` 043a34b5), a314e13 (data) |

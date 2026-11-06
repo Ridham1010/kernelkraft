@@ -105,6 +105,13 @@ trace_event(int cpu, short pid, short ev, int arg)
 static int
 dl_before(uint a, uint b)
 {
+  // NO_DEADLINE (0xffffffff) must be "infinitely late". The signed
+  // wrap-around compare below would treat it as -1, i.e. earlier than
+  // every real deadline, so it is special-cased first.
+  if (a == NO_DEADLINE)
+    return 0;
+  if (b == NO_DEADLINE)
+    return 1;
   // Use signed comparison to handle wrap-around correctly
   // (int)(a - b) < 0 means a is before b in modular arithmetic
   return (int)(a - b) < 0;

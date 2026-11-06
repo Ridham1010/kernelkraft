@@ -1,0 +1,4 @@
+xrun b38783a6 wfgen 4 100 1024 37 3
+RESULT policy=2 cpus=1 finish=27 deadline=37 miss=1
+@@DONE b38783a6
+$ 

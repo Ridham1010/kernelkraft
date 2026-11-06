@@ -1,0 +1,4 @@
+xrun 99830ced wfgen 4 100 2048 72 3
+RESULT policy=2 cpus=1 finish=49 deadline=72 miss=0
+@@DONE 99830ced
+$ 

@@ -1,0 +1,4 @@
+xrun 4dfabd19 schedctl rr
+Scheduler policy set to rr
+@@DONE 4dfabd19
+$ 
