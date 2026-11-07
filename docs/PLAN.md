@@ -177,7 +177,7 @@ repo/
 | DESIGN.md | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | | final read |
 | PARAMS.md | ✔ | | | | | | ✔ | ✔ | |
 | SYSCALLS.md | | ✔ | ✔ | | | ✔ | ✔ | | |
-| TEST_TABLE.md | | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | fill PENDING |
+| TEST_TABLE.md | | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | final audit |
 | EVIDENCE_INDEX.md | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | verify |
 | LIMITATIONS.md | | | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | final read |
 | REPORT_NOTES.md | | | ✔ | | ✔ | ✔ | | ✔ | polish |
@@ -187,7 +187,7 @@ repo/
 
 ### Rules that make this painless
 
-1. **Every test is a row from the moment it is designed.** Columns: `ID | Stage | Test | Input | Expected | Observed | Evidence file | Type (positive / negative / benign control)`. The agent fills *Expected*; you run the test and replace `PENDING` in *Observed* the same day.
+1. **Every test is a row from the moment it is designed.** Columns: `ID | Stage | Test | Input | Expected | Observed | Evidence file | Type (positive / negative / benign control)`. The agent fills *Expected*; you run the test and replace `UNRUN` in *Observed* the same day.
 2. **Every raw log is registered** in `EVIDENCE_INDEX.md` the day it is created (path, what produced it, commit hash).
 3. **Every limitation goes into `LIMITATIONS.md` the day you find it**, phrased as "what the model leaves out compared with a full implementation".
 4. **Every 2 days:** commit, add a `JOURNAL.md` entry (what failed and why), run `tools/check_submission.sh <stage>`.
@@ -196,7 +196,7 @@ repo/
 ### The packaging scripts (created in Stage 0, extended later)
 
 - `tools/make_zip.sh <baseline_tag>`: zips only files **added or modified** since the baseline tag (`git diff --name-only --diff-filter=AM baseline HEAD`), excluding build outputs, into `dist/Team_Name_3.zip`. Run it at the end of **every** stage as a dry run. Surprises appear early.
-- `tools/check_submission.sh <stage>`: checks that every document due by that stage exists, is non-empty, has no unfilled `TODO`/`<fill>` markers, that `TEST_TABLE.md` has no `PENDING` for tests belonging to completed stages, and prints a zip content summary.
+- `tools/check_submission.sh <stage>`: checks that every document due by that stage exists, is non-empty, has no unfilled placeholders, that `TEST_TABLE.md` has no `UNRUN` for tests belonging to completed stages, and prints a zip content summary.
 
 ---
 
@@ -259,7 +259,7 @@ WORKING RULES:
 - Add a short comment explaining every non-obvious design choice.
 - DOCUMENTATION DUTY: at the end of the task, update the living documents I
   name (docs/DESIGN.md, TEST_TABLE.md, SYSCALLS.md, LIMITATIONS.md, ...).
-  Fill the Expected column of new test rows and write PENDING in Observed.
+  Fill the Expected column of new test rows and write UNRUN in Observed.
   Never invent observed results, numbers, or log excerpts.
 ````
 
@@ -337,8 +337,8 @@ Stage 0: scaffolding only. Do NOT change any kernel logic.
    CONTRIBUTIONS (0); SYSCALLS, TEST_TABLE, EVIDENCE_INDEX (1); LIMITATIONS,
    REPORT_NOTES, VIVA (2); logs/audit.jsonl (3); at least one file in
    docs/gdb/ (5, warn only before 8); results/results.csv (7). It must also
-   fail if any file due so far contains "TODO" or "<fill>", and if
-   TEST_TABLE.md has PENDING in a row whose Stage <= the given stage.
+   fail if any file due so far contains placeholders, and if
+   TEST_TABLE.md has UNRUN in a row whose Stage <= the given stage.
    It then calls tools/make_zip.sh and prints the file list and size.
 5. Create tools/make_zip.sh: uses the git tag "baseline", lists files added or
    modified (git diff --name-only --diff-filter=AM baseline HEAD) plus
@@ -442,7 +442,7 @@ host/ping.py: start, run "ls", print the result, close.
 Also write docs/bridge.md describing the method, prompts, limits.
 Update docs: SYSCALLS.md (row for 22), TEST_TABLE.md rows T-01..T-04
 (hello_test output; ls via Python; ticktest result; usertests after the
-FSSIZE change) with Expected filled and Observed PENDING, DESIGN.md sections
+FSSIZE change) with Expected filled and Observed UNRUN, DESIGN.md sections
 Capacity and Bridge, EVIDENCE_INDEX.md placeholders for the logs.
 ````
 
@@ -566,7 +566,7 @@ Stage 2: baseline EDF with a runtime-switchable policy. NO donation yet.
    setworkflow(1,100) and child B setworkflow(2,200); each prints
    "child X pid=%d done at %d" (build the line in a buffer, ONE write()).
 9. Docs: DESIGN.md (Scheduler section), SYSCALLS.md rows 23-25, TEST_TABLE.md
-   rows T-06..T-13 (Expected filled, Observed PENDING), LIMITATIONS.md,
+   rows T-06..T-13 (Expected filled, Observed UNRUN), LIMITATIONS.md,
    REPORT_NOTES.md Model section, VIVA.md Q&A.
 Give exact build/test commands. Do not touch pipe.c.
 ````
@@ -957,7 +957,7 @@ sleeplock.h, file.h (in that order after spinlock.h).
      other donation must remain.
 9. Update docs: DESIGN.md (Donation + lock-order argument), REPORT_NOTES.md
    (Locking, Donation and proofs), LIMITATIONS.md, SYSCALLS.md, VIVA.md,
-   TEST_TABLE.md rows T-34..T-45. Observed stays PENDING.
+   TEST_TABLE.md rows T-34..T-45. Observed stays UNRUN until evidence is captured.
 Tell me exactly how to run each test on CPUS=1 and CPUS=3. List every place
 where a lock is acquired so I can verify the order.
 ````
@@ -1158,7 +1158,7 @@ policy,cpus,run,alpha,finish,deadline,miss,status,commit_hash,rawlog_path.
    leave the Explanation and Anomalies sections for me).
 5. Update docs/EVIDENCE_INDEX.md with a generator script tools/index_evidence.py
    that lists every graph and the CSV/raw-log paths it came from, TEST_TABLE.md
-   rows T-54..T-60 (Observed PENDING).
+   rows T-54..T-60 (Observed UNRUN).
 Never smooth, drop or alter data beyond the stated rules.
 ````
 
@@ -1203,7 +1203,7 @@ No new features. Everything you need already exists in the living documents; thi
 
 | File | Final action |
 |---|---|
-| `TEST_TABLE.md` | No `PENDING` left. Negative and benign controls present for each feature. |
+| `TEST_TABLE.md` | No `UNRUN` left. Negative and benign controls present for each feature. |
 | `EVIDENCE_INDEX.md` | Every row points to a file that exists. |
 | `LIMITATIONS.md` | Final read; each item phrased "what the model leaves out compared with a full implementation". |
 | `CONTRIBUTIONS.md` | Per-person highlights: files, functions, tests, plus `git shortlog -sn`. |
@@ -1225,7 +1225,7 @@ No new features. Everything you need already exists in the living documents; thi
 
 Stage 8: packaging and viva preparation. Do not change functionality.
 
-1. Extend tools/check_submission.sh 8: fail on any PENDING or TODO anywhere in
+1. Extend tools/check_submission.sh 8: fail on any placeholder anywhere in
    docs/, on EVIDENCE_INDEX rows pointing to missing files, on missing
    per-person entries in CONTRIBUTIONS.md, and if dist/Team_Name_3.zip
    contains build outputs. Print a final summary table.
@@ -1241,7 +1241,7 @@ Stage 8: packaging and viva preparation. Do not change functionality.
    and a 3-line approach each.
 4. Cross-check docs/TEST_TABLE.md against host/tests and user/ test programs and
    list tests that exist in code but not in the table and vice versa.
-Do not invent results; leave unknowns as PENDING for me.
+Do not invent results; leave unknowns marked UNRUN for later capture.
 ````
 
 **Test.**
@@ -1318,5 +1318,5 @@ Everything below already exists in the repo because the living documents were ma
 11. Overlong shell lines (the xv6 shell reads only 99 characters).
 12. Interleaved console output from concurrent processes breaking your parser.
 13. Pasting agent code without reading it: agents release locks early, forget early-return paths and invent functions that do not exist in this tree.
-14. Leaving documentation for the end: a `PENDING` in `TEST_TABLE.md` at Stage 8 means an untested claim.
+14. Leaving documentation for the end: an `UNRUN` in `TEST_TABLE.md` at Stage 8 means an untested claim.
 15. Fabricating a GDB log or hiding a limitation. Both cost more than the honest version.

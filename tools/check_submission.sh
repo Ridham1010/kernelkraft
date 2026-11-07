@@ -39,6 +39,46 @@ for file in $required; do
   fi
 done
 
+if [ "$stage" -ge 8 ]; then
+  if grep -RInE 'PENDING|TODO|<fill>' docs >/dev/null; then
+    echo "placeholder found anywhere under docs/" >&2
+    exit 1
+  fi
+
+  evidence_list=/tmp/kernelkraft-evidence-list.$$
+  awk -F'|' '
+    NR > 1 && $0 ~ /^\|/ && $2 !~ /^[[:space:]]*---/ {
+      path=$2
+      if (path !~ /`/) next
+      sub(/^[^`]*`/, "", path)
+      sub(/`.*/, "", path)
+      if (path ~ /^(logs|results|host|docs|xv6-public|results\.csv)(\/|$)/)
+        print path
+    }
+  ' docs/EVIDENCE_INDEX.md >"$evidence_list"
+  evidence_status=0
+  while IFS= read -r path; do
+    case "$path" in
+      *"<br>"*|*","*) continue ;;
+    esac
+    if [ ! -e "$path" ]; then
+      echo "missing evidence path: $path" >&2
+      evidence_status=1
+    fi
+  done <"$evidence_list"
+  rm -f "$evidence_list"
+  if [ "$evidence_status" -ne 0 ]; then
+    exit "$evidence_status"
+  fi
+
+  for contributor in "Ridham1010" "Pranav Nair" "Atharv" "Ridham Shah"; do
+    if ! grep -F "$contributor" docs/CONTRIBUTIONS.md >/dev/null; then
+      echo "missing contributor entry: $contributor" >&2
+      exit 1
+    fi
+  done
+fi
+
 if [ "$stage" -ge 1 ] && awk -F'|' -v stage="$stage" '
   /^[|]/ && $0 !~ /ID[[:space:]]*\|/ {
     gsub(/[[:space:]]/, "", $2)
@@ -55,3 +95,28 @@ if [ "$stage" -lt 8 ] && ! find docs/gdb -type f -print -quit 2>/dev/null | grep
 fi
 
 "$root/tools/make_zip.sh"
+
+if [ "$stage" -ge 8 ]; then
+  archive="${TEAM:-Team_Name}_3.zip"
+  archive="dist/$archive"
+  if ! unzip -Z1 "$archive" >/tmp/kernelkraft-archive-list.$$ 2>/dev/null; then
+    echo "cannot inspect archive: $archive" >&2
+    rm -f /tmp/kernelkraft-archive-list.$$
+    exit 1
+  fi
+  if grep -E '(^|/)([^/]+\.(o|d|asm|sym|img|pyc)|kernel|bootblock|fs\.img|dist/|build/|__pycache__)(/|$)' \
+      /tmp/kernelkraft-archive-list.$$ >/dev/null; then
+    echo "build output found in archive: $archive" >&2
+    rm -f /tmp/kernelkraft-archive-list.$$
+    exit 1
+  fi
+  echo
+  echo "Stage 8 summary"
+  printf '%-28s %s\n' "Documentation placeholders" "PASS"
+  printf '%-28s %s\n' "Evidence paths" "PASS"
+  printf '%-28s %s\n' "Contributor entries" "PASS"
+  printf '%-28s %s\n' "Archive build outputs" "PASS"
+  printf '%-28s %s\n' "Archive" "$archive"
+  printf '%-28s %s\n' "Packaged files" "$(wc -l < /tmp/kernelkraft-archive-list.$$)"
+  rm -f /tmp/kernelkraft-archive-list.$$
+fi

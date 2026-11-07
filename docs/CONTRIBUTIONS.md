@@ -1,5 +1,23 @@
 # Contributions
 
+## Per-person highlights
+
+| Contributor | Files/functions | Tests or evidence |
+|---|---|---|
+| Ridham1010 | `xv6-public/proc.c` scheduler, donation, trace ring; `host/harness/run_all.py` | T-34--T-60; Stage 7 result sweep |
+| Pranav Nair | `host/bridge/`, validator/planner integration, `host/tests/` | T-14--T-26; validator and bridge tests |
+| Atharv | `xv6-public/wfgen.c`, user workload programs, Stage 4 admission paths | T-25--T-32; T-46--T-53 |
+| Ridham Shah | documentation, evidence index, packaging scripts and final audit | T-00b, T-60, Stage 8 checker |
+
+`git shortlog -sn` at the final audit:
+
+```text
+17	Ridham1010
+14	Pranav Nair
+10	Atharv
+1	Ridham Shah
+```
+
 | Contributor | Work |
 |---|---|
 | Team | Stage 1 hello syscall, tick test, filesystem capacity, and QEMU bridge |

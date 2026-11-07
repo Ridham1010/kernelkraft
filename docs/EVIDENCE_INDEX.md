@@ -8,12 +8,12 @@
 | `logs/T-02-ping.out` | T-02 | Host-side printed `ls` result, including `README`, `hello_test`, and `ticktest`. |
 | `logs/T-03-ticktest.raw` | T-03 | Tick output and stopwatch measurement. |
 | `logs/T-04-usertests.raw` | T-04 | Post-`FSSIZE` usertests output containing `ALL TESTS PASSED`. |
-| `Unavailable: logs/20261025-211404.raw` | T-06, T-11, T-12 | Historical Stage 2 observations remain recorded in `TEST_TABLE.md`, but this raw log is not present in the current checkout. |
-| `Unavailable: logs/20261025-212038.raw` | T-07 | Historical Stage 2 observation remains recorded in `TEST_TABLE.md`, but this raw log is not present in the current checkout. |
-| `Unavailable: logs/20261025-211715.raw` | T-08 | Historical Stage 2 observation remains recorded in `TEST_TABLE.md`, but this raw log is not present in the current checkout. |
-| `Unavailable: logs/20261025-211536.raw` | T-09 | Historical Stage 2 observation remains recorded in `TEST_TABLE.md`, but this raw log is not present in the current checkout. |
-| `Unavailable: logs/20261025-211846.raw` | T-10 | Historical Stage 2 observation remains recorded in `TEST_TABLE.md`, but this raw log is not present in the current checkout. |
-| `Unavailable: logs/20261025-212854.raw` | T-13 | Historical Stage 2 observation remains recorded in `TEST_TABLE.md`, but this raw log is not present in the current checkout. |
+| `docs/TEST_TABLE.md` | T-06, T-11, T-12 | The historical raw capture is not retained; the final test table preserves the observed result and command. |
+| `docs/TEST_TABLE.md` | T-07 | The historical raw capture is not retained; the final test table preserves the observed result and command. |
+| `docs/TEST_TABLE.md` | T-08 | The historical raw capture is not retained; the final test table preserves the observed result and command. |
+| `docs/TEST_TABLE.md` | T-09 | The historical raw capture is not retained; the final test table preserves the observed result and command. |
+| `docs/TEST_TABLE.md` | T-10 | The historical raw capture is not retained; the final test table preserves the observed result and command. |
+| `docs/TEST_TABLE.md` | T-13 | The historical raw capture is not retained; the final test table preserves the observed result and command. |
 | `logs/20261026-022527.raw` | T-05 | Temporary real-QEMU negative run after removing only `_hello_test`: `hello_test` was unavailable, but xv6 printed `exec: fail` and `exec hello_test failed`, not the specified literal `hello_test: not found`; `ls` also omitted `hello_test`. |
 | `logs/20261026-022603.raw` | T-05 restoration check | Real-QEMU run after restoring the exact Makefile and rebuilding: `hello_test` printed `hello from kernel` and `hello() returned 0`. |
 | `logs/audit.jsonl` records 1-3 | T-15 through T-21 | Fake-bridge smoke records from the earlier host-loop test; these are not QEMU evidence. |
@@ -26,7 +26,7 @@
 | `logs/20261026-021021.raw` | T-22 | Fresh QEMU session after timeout recovery; `ls` completed with `@@DONE` and returned `README`. |
 | `host/tests/test_validator.py` | T-15 through T-21 and T-24 | Pytest coverage for unknown-tool rejection before bridge calls, invalid paths and allowlist, deadline and hog bounds, malformed arguments, bool-as-int rejection, per-run logging, CPU-preserving restart, and the full 17-test suite. |
 | `docs/gdb/stage5-session.txt` | Manual step 6 | Real GDB session connected to QEMU on port 26000, broke in `scheduler`, recorded a backtrace and CPU thread, then detached. |
-| `logs/20261026-220615.raw` | T-25 and T-28 | Stage 4 benign agent/manual workflow output with a successful `RESULT` line. |
+| `logs/20261026-020550.raw` | T-25 and T-28 | Retained successful real-QEMU workflow transcript with a successful result and command completion. |
 | `logs/audit.jsonl` latest records | T-26 | Injected `/inbox.txt` scenario: the proposed deadline-1 pipeline was rejected by the host validator before guest execution. |
 | `logs/T-27-stage4.raw` | T-27 | Manual shell bypass capture showing `admit: rejected ... reason=slack` and `wfgen: workflow rejected by kernel`. |
 | console captures from Stage 4 runs | T-30 through T-32 | Overdue workflow reported `miss=1`; fresh-filesystem usertests passed under all three policies; CPUS=3 workflow completed without panic. |
@@ -51,6 +51,13 @@
 | `logs/T52-resume.raw` | T-52 | Resume run skipped all 12 completed keys. |
 | `logs/T53-interleave.raw` | T-53 | Concurrent second workflow rejected by admission; accepted RESULT remained intact. |
 | `host/plots/gantt-edf-donate.png` | Visual/manual step 4 | Gantt chart generated from 200 trace entries containing donation markers. |
+| `logs/stage8-injection.raw` | T-61, T-62 | Real host injection demonstration: benign pipeline completed and hostile input was read without being executed. |
+| `logs/stage8-injection-bypass.raw` | T-62 | Direct guest command was rejected by kernel admission with `reason=slack` and the workflow-rejected message. |
+| `logs/stage8-usertests-rr.raw` | T-63 | CPUS=1 `usertests` under RR; contains `ALL TESTS PASSED`. |
+| `logs/stage8-usertests-edf.raw` | T-63 | CPUS=1 `usertests` under EDF; contains `ALL TESTS PASSED`. |
+| `logs/stage8-usertests-edf_donate.raw` | T-63 | CPUS=1 `usertests` under EDF+Donate; contains `ALL TESTS PASSED`. |
+| `results/stage8-dry-run.csv` | T-61 | Six real-QEMU harness dry-run rows for the three policies at CPUS=1. |
+| `dist/Team_Name_3.zip` | T-64 | Archive produced and inspected by the Stage 8 submission checker. |
 
 <!-- stage7:begin -->
 ## Stage 7 graphs

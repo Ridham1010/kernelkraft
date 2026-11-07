@@ -1,0 +1,7 @@
+policy,cpus,run,alpha,finish,deadline,miss,status,commit_hash,rawlog_path
+rr,1,1,1.5,,,,no_result,4c858421,logs/stage8-dry-run/rr_cpus1_a1.5_run1.raw
+rr,1,2,1.5,,,,no_result,4c858421,logs/stage8-dry-run/rr_cpus1_a1.5_run2.raw
+edf,1,1,1.5,,,,no_result,4c858421,logs/stage8-dry-run/edf_cpus1_a1.5_run1.raw
+edf,1,2,1.5,,,,no_result,4c858421,logs/stage8-dry-run/edf_cpus1_a1.5_run2.raw
+edf_donate,1,1,1.5,,,,no_result,4c858421,logs/stage8-dry-run/edf_donate_cpus1_a1.5_run1.raw
+edf_donate,1,2,1.5,,,,no_result,4c858421,logs/stage8-dry-run/edf_donate_cpus1_a1.5_run2.raw

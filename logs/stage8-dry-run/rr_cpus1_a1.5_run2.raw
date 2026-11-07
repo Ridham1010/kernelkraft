@@ -1,0 +1,5 @@
+make: Entering directory '/home/ridham-shah/Desktop/kernelkraft/xv6-public'
+qemu-system-i386 -nographic -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,index=0,media=disk,format=raw -smp 1 -m 512 -snapshot -machine pc-i440fx-yakkety
+qemu-system-i386: failed to find romfile "compat-256k-efi-e1000.rom"
+make: *** [Makefile:249: qemu-nox] Error 1
+make: Leaving directory '/home/ridham-shah/Desktop/kernelkraft/xv6-public'
