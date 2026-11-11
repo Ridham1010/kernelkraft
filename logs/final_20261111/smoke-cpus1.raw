@@ -1,0 +1,342 @@
+gcc -Werror -Wall -o mkfs mkfs.c
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o ulib.o ulib.c
+gcc -m32 -gdwarf-2 -Wa,-divide   -c -o usys.o usys.S
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o printf.o printf.c
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o umalloc.o umalloc.c
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o cat.o cat.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _cat cat.o ulib.o usys.o printf.o umalloc.o
+objdump -S _cat > cat.asm
+objdump -t _cat | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > cat.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o echo.o echo.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _echo echo.o ulib.o usys.o printf.o umalloc.o
+objdump -S _echo > echo.asm
+objdump -t _echo | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > echo.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o forktest.o forktest.c
+# forktest has less library code linked in - needs to be small
+# in order to be able to max out the proc table.
+ld -m    elf_i386 -N -e main -Ttext 0 -o _forktest forktest.o ulib.o usys.o
+objdump -S _forktest > forktest.asm
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o grep.o grep.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _grep grep.o ulib.o usys.o printf.o umalloc.o
+objdump -S _grep > grep.asm
+objdump -t _grep | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > grep.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o init.o init.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _init init.o ulib.o usys.o printf.o umalloc.o
+objdump -S _init > init.asm
+objdump -t _init | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > init.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o kill.o kill.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _kill kill.o ulib.o usys.o printf.o umalloc.o
+objdump -S _kill > kill.asm
+objdump -t _kill | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > kill.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o ln.o ln.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _ln ln.o ulib.o usys.o printf.o umalloc.o
+objdump -S _ln > ln.asm
+objdump -t _ln | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > ln.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o ls.o ls.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _ls ls.o ulib.o usys.o printf.o umalloc.o
+objdump -S _ls > ls.asm
+objdump -t _ls | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > ls.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o mkdir.o mkdir.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _mkdir mkdir.o ulib.o usys.o printf.o umalloc.o
+objdump -S _mkdir > mkdir.asm
+objdump -t _mkdir | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > mkdir.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o rm.o rm.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _rm rm.o ulib.o usys.o printf.o umalloc.o
+objdump -S _rm > rm.asm
+objdump -t _rm | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > rm.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o sh.o sh.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _sh sh.o ulib.o usys.o printf.o umalloc.o
+objdump -S _sh > sh.asm
+objdump -t _sh | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > sh.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o stressfs.o stressfs.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _stressfs stressfs.o ulib.o usys.o printf.o umalloc.o
+objdump -S _stressfs > stressfs.asm
+objdump -t _stressfs | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > stressfs.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o usertests.o usertests.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _usertests usertests.o ulib.o usys.o printf.o umalloc.o
+objdump -S _usertests > usertests.asm
+objdump -t _usertests | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > usertests.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o wc.o wc.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _wc wc.o ulib.o usys.o printf.o umalloc.o
+objdump -S _wc > wc.asm
+objdump -t _wc | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > wc.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o zombie.o zombie.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _zombie zombie.o ulib.o usys.o printf.o umalloc.o
+objdump -S _zombie > zombie.asm
+objdump -t _zombie | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > zombie.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o mytest.o mytest.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _mytest mytest.o ulib.o usys.o printf.o umalloc.o
+objdump -S _mytest > mytest.asm
+objdump -t _mytest | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > mytest.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o hello_test.o hello_test.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _hello_test hello_test.o ulib.o usys.o printf.o umalloc.o
+objdump -S _hello_test > hello_test.asm
+objdump -t _hello_test | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > hello_test.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o ticktest.o ticktest.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _ticktest ticktest.o ulib.o usys.o printf.o umalloc.o
+objdump -S _ticktest > ticktest.asm
+objdump -t _ticktest | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > ticktest.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o add_test.o add_test.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _add_test add_test.o ulib.o usys.o printf.o umalloc.o
+objdump -S _add_test > add_test.asm
+objdump -t _add_test | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > add_test.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o schedctl.o schedctl.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _schedctl schedctl.o ulib.o usys.o printf.o umalloc.o
+objdump -S _schedctl > schedctl.asm
+objdump -t _schedctl | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > schedctl.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o schedstat.o schedstat.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _schedstat schedstat.o ulib.o usys.o printf.o umalloc.o
+objdump -S _schedstat > schedstat.asm
+objdump -t _schedstat | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > schedstat.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o edftest.o edftest.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _edftest edftest.o ulib.o usys.o printf.o umalloc.o
+objdump -S _edftest > edftest.asm
+objdump -t _edftest | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > edftest.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o test_negative.o test_negative.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _test_negative test_negative.o ulib.o usys.o printf.o umalloc.o
+objdump -S _test_negative > test_negative.asm
+objdump -t _test_negative | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > test_negative.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o xrun.o xrun.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _xrun xrun.o ulib.o usys.o printf.o umalloc.o
+objdump -S _xrun > xrun.asm
+objdump -t _xrun | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > xrun.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o wfgen.o wfgen.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _wfgen wfgen.o ulib.o usys.o printf.o umalloc.o
+objdump -S _wfgen > wfgen.asm
+objdump -t _wfgen | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > wfgen.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o donatetest.o donatetest.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _donatetest donatetest.o ulib.o usys.o printf.o umalloc.o
+objdump -S _donatetest > donatetest.asm
+objdump -t _donatetest | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > donatetest.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o donate5.o donate5.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _donate5 donate5.o ulib.o usys.o printf.o umalloc.o
+objdump -S _donate5 > donate5.asm
+objdump -t _donate5 | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > donate5.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o cycletest.o cycletest.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _cycletest cycletest.o ulib.o usys.o printf.o umalloc.o
+objdump -S _cycletest > cycletest.asm
+objdump -t _cycletest | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > cycletest.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o killtest.o killtest.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _killtest killtest.o ulib.o usys.o printf.o umalloc.o
+objdump -S _killtest > killtest.asm
+objdump -t _killtest | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > killtest.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o wftest.o wftest.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _wftest wftest.o ulib.o usys.o printf.o umalloc.o
+objdump -S _wftest > wftest.asm
+objdump -t _wftest | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > wftest.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o smallpipe.o smallpipe.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _smallpipe smallpipe.o ulib.o usys.o printf.o umalloc.o
+objdump -S _smallpipe > smallpipe.asm
+objdump -t _smallpipe | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > smallpipe.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o schedtrace.o schedtrace.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _schedtrace schedtrace.o ulib.o usys.o printf.o umalloc.o
+objdump -S _schedtrace > schedtrace.asm
+objdump -t _schedtrace | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > schedtrace.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o calib.o calib.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _calib calib.o ulib.o usys.o printf.o umalloc.o
+objdump -S _calib > calib.asm
+objdump -t _calib | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > calib.sym
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o tracectl.o tracectl.c
+ld -m    elf_i386 -N -e main -Ttext 0 -o _tracectl tracectl.o ulib.o usys.o printf.o umalloc.o
+objdump -S _tracectl > tracectl.asm
+objdump -t _tracectl | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > tracectl.sym
+./mkfs fs.img README report.txt inbox.txt _cat _echo _forktest _grep _init _kill _ln _ls _mkdir _rm _sh _stressfs _usertests _wc _zombie _mytest _hello_test _ticktest _add_test _schedctl _schedstat _edftest _test_negative _xrun _wfgen _donatetest _donate5 _cycletest _killtest _wftest _smallpipe _schedtrace _calib _tracectl
+nmeta 59 (boot, super, log blocks 30 inode blocks 26, bitmap blocks 1) blocks 3941 total 4000
+balloc: first 1322 blocks have been allocated
+balloc: write bitmap block at sector 58
+qemu-system-i386 -nographic -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,index=0,media=disk,format=raw -smp 1 -m 512 
+c[?7l[2J[0mSeaBIOS (version 1.16.3-debian-1.16.3-2)
+
+
+iPXE (https://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+1EFC7F60+1EF07F60 CA00
+Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
+
+
+Booting from Hard Disk..xv6...
+cpu0: starting 0
+sb: size 4000 nblocks 3941 ninodes 200 nlog 30 logstart 2 inodestart 32 bmap start 58
+init: starting sh
+$ schedstat
+policy=2 ncpu=1 ticks=492 misses=0 donations=0 cycles=0 rejected=0
+$ wftest
+admit: rejected pid=5 wid=5 deadline=19 reason=slack
+CHECK wftest A1 short slack refused ok
+CHECK wftest A2 same wid usable after refusal ok
+CHECK wftest B joiner shares deadline ok
+CHECK wftest C large wid accepted ok
+CHECK wftest D workflow survives creator exit ok
+RESULT wftest
+zombie!
+$ test_negative
+=== Negative Tests ===
+T-11 PASS: setsched(7) = -1
+T-12a PASS: setworkflow(1,0) = -1
+T-12b first call: setworkflow(2,100) = 0 (OK)
+T-12b PASS: second setworkflow call = -1
+$ donate5
+donate: donor=19 recv=18 dl=725
+donate: donor=18 recv=17 dl=725
+donate: donor=17 recv=16 dl=725
+donate: donor=16 recv=15 dl=725
+donate: donor=16 recv=15 dl=725
+donate: donor=17 recv=16 dl=725
+donate: donor=16 recv=15 dl=725
+donate: donor=19 recv=18 dl=725
+donate: donor=18 recv=17 dl=725
+donate: donor=17 recv=16 dl=725
+donate: donor=16 recv=15 dl=725
+donate: donor=19 recv=18 dl=725
+CHECK donate5 finish=2 deadline=300 donations=12 cycles=0 misses=0
+RESULT donate5
+$ cycletest
+donate: donor=21 recv=22 dl=861
+donate: donor=22 recv=21 dl=861
+donate: cycle
+RESULT cycletest
+$ killtest
+donate: donor=25 recv=23 dl=98f
+donate: donor=25 recv=24 dl=98f
+donate: donor=24 recv=26 dl=98f
+CHECK after_one_kill donated=98F
+CHECK after_two_kills donated=FFFFFFFF
+RESULT killtest
+$ donatetes  est
+donate: donor=29 recv=30 dl=b9a
+donate: donor=29 recv=31 dl=b9a
+donate: donor=29 recv=32 dl=b9a
+donate: donor=31 recv=28 dl=b9a
+donate: donor=30 recv=31 dl=b9a
+donate: donor=31 recv=28 dl=b9a
+donate: donor=29 recv=30 dl=b9a
+donate: donor=30 recv=31 dl=b9a
+donate: donor=31 recv=28 dl=b9a
+donate: donor=31 recv=28 dl=b9a
+donate: donor=30 recv=31 dl=b9a
+donate: donor=29 recv=30 dl=b9a
+donate: donor=30 recv=31 dl=b9a
+CHECK donatetest donations=30 cycles=1 misses=0
+RESULT donatetest
+ $ usertests
+usertests starting
+arg test passed
+createdelete test
+createdelete ok
+linkunlink test
+linkunlink ok
+concreate test
+concreate ok
+fourfiles test
+fourfiles ok
+sharedfd test
+sharedfd ok
+bigarg test
+bigarg test ok
+bigwrite test
+bigwrite ok
+bigarg test
+bigarg test ok
+bss test
+bss test ok
+sbrk test
+pid 127 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x80000000--kill proc
+pid 128 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x8000c350--kill proc
+pid 129 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x800186a0--kill proc
+pid 130 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x800249f0--kill proc
+pid 131 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x80030d40--kill proc
+pid 132 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x8003d090--kill proc
+pid 133 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x800493e0--kill proc
+pid 134 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x80055730--kill proc
+pid 135 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x80061a80--kill proc
+pid 136 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x8006ddd0--kill proc
+pid 137 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x8007a120--kill proc
+pid 138 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x80086470--kill proc
+pid 139 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x800927c0--kill proc
+pid 140 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x8009eb10--kill proc
+pid 141 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x800aae60--kill proc
+pid 142 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x800b71b0--kill proc
+pid 143 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x800c3500--kill proc
+pid 144 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x800cf850--kill proc
+pid 145 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x800dbba0--kill proc
+pid 146 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x800e7ef0--kill proc
+pid 147 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x800f4240--kill proc
+pid 148 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x80100590--kill proc
+pid 149 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x8010c8e0--kill proc
+pid 150 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x80118c30--kill proc
+pid 151 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x80124f80--kill proc
+pid 152 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x801312d0--kill proc
+pid 153 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x8013d620--kill proc
+pid 154 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x80149970--kill proc
+pid 155 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x80155cc0--kill proc
+pid 156 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x80162010--kill proc
+pid 157 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x8016e360--kill proc
+pid 158 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x8017a6b0--kill proc
+pid 159 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x80186a00--kill proc
+pid 160 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x80192d50--kill proc
+pid 161 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x8019f0a0--kill proc
+pid 162 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x801ab3f0--kill proc
+pid 163 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x801b7740--kill proc
+pid 164 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x801c3a90--kill proc
+pid 165 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x801cfde0--kill proc
+pid 166 usertests: trap 14 err 5 on cpu 0 eip 0x3077 addr 0x801dc130--kill proc
+allocuvm out of memory
+allocuvm out of memory
+allocuvm out of memory
+allocuvm out of memory
+allocuvm out of memory
+allocuvm out of memory
+allocuvm out of memory
+allocuvm out of memory
+sbrk test OK
+validate test
+validate ok
+open test
+open test ok
+small file test
+creat small succeeded; ok
+writes ok
+open small succeeded ok
+read succeeded ok
+small file test ok
+big files test
+big files ok
+many creates, followed by unlink test
+many creates, followed by unlink; ok
+openiput test
+openiput test ok
+exitiput test
+exitiput test ok
+iput test
+iput test ok
+mem test
+allocuvm out of memory
+mem ok
+pipe1 ok
+preempt: kill... wait... preempt ok
+exitwait ok
+rmdot test
+rmdot ok
+fourteen test
+fourteen ok
+bigfile test
+bigfile test ok
+subdir test
+subdir ok
+linktest
+linktest ok
+unlinkread test
+unlinkread ok
+dir vs file
+dir vs file OK
+empty file name
+empty file name OK
+fork test
+fork test OK
+bigdir test
+bigdir ok
+uio test
+pid 621 usertests: trap 13 err 0 on cpu 0 eip 0x35e3 addr 0x801dc130--kill proc
+uio test done
+exec test
+ALL TESTS PASSED
+$ QEMU: Terminated
+

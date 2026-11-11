@@ -6,6 +6,11 @@ in [`host/config.json`](../host/config.json).
 
 | Parameter | Value | Notes |
 |---|---:|---|
+| `DEFAULT_POLICY` | 2 | Policy at boot (0=rr, 1=edf, 2=edf_donate) |
+| `MIN_SLACK` | 20 | Admission: minimum relative deadline (ticks) for a new workflow |
+| `MAX_URGENT` | 64 | Admission: cap on live processes with their own deadline; equal to `NPROC`, so it does not refuse a process the table could hold |
+| `NWF` | 16 | Workflows alive at once; any positive `wid` is valid |
+| `DONATION_EVENT_MAX` | 32 | Donation events buffered per pipe wait for the print mode |
 | `MIN_STAGES` | 2 | Host validator lower bound for pipeline length |
 | `MAX_STAGES` | 6 | Host validator upper bound for pipeline length |
 | `MIN_WORK` | 1 | Host validator lower bound for stage work |
@@ -22,7 +27,7 @@ in [`host/config.json`](../host/config.json).
 | `bytes` | 1024, 4096 | Pipeline data size per stage |
 | `work` | 100, 500, 1000 | CPU work units per stage |
 | `hogs` (CPUS=1) | 3 | Host harness selection; at least cpus + 1 |
-| `hogs` (CPUS=3) | 5 | Host harness selection; at least cpus + 1 |
+| `hogs` (CPUS=3) | 8 | Host harness selection; at least cpus + 1. Raised from 5 on 2026-11-11 because 5 hogs did not load three CPUs enough to separate the policies |
 
 ## Trace Ring Parameters
 
@@ -47,7 +52,7 @@ These values describe the PLAN-conformant second batch (`results/results.csv`).
 | `bytes` | 2048 | Pipeline data size; PLAN requires bytes ≥ 4 × PIPESIZE (512) |
 | `MIN_PIPELINE_BYTES` | 2048 | `host/config.json`; the harness refuses to start if `harness_workload.bytes` is below it |
 | `hogs` (CPUS=1) | 3 | `host/config.json` `hogs_by_cpus` |
-| `hogs` (CPUS=3) | 5 | `host/config.json` `hogs_by_cpus` |
+| `hogs` (CPUS=3) | 8 | `host/config.json` `hogs_by_cpus` |
 | Runs per cell (main batch) | 20 | 3 policies × CPUS 1, 3 at α = 1.5 |
 | Runs per cell (sweep) | 10 | CPUS=1, all four α values; α = 1.5 runs 1-10 are reused from the main batch. 10 runs per sweep cell instead of 20, as PLAN allows when time is short. |
 | QEMU machine flag | `-machine pc-i440fx-yakkety` | QEMU 10.1.0; carried by `host/config.json` `qemu_extra` and passed by the harness. Without it xv6 starts only cpu0 (see L-24). |

@@ -24,7 +24,6 @@ main(void)
   pipe(p01);
   pipe(p12);
   pipe(p23);
-  setworkflow(1, DONATION_TEST_DEADLINE);
   tracectl(3);
   p[0] = fork();
   if(p[0] == 0){
@@ -39,6 +38,12 @@ main(void)
   p[3] = fork();
   if(p[3] == 0){
     close(p01[0]); close(p01[1]); close(p12[0]); close(p12[1]); close(p23[1]);
+    // Only the final reader has a deadline. The earlier stages and the hog
+    // have none, so they can only become urgent through donation.
+    if(setworkflow(1, DONATION_TEST_DEADLINE) < 0){
+      printf(1, "FAIL donatetest setworkflow\n");
+      exit();
+    }
     while(read(p23[0], buf, sizeof(buf)) > 0)
       ;
     close(p23[0]);

@@ -195,6 +195,7 @@ UPROGS=\
 	_donate5\
 	_cycletest\
 	_killtest\
+	_wftest\
 	_smallpipe\
 	_schedtrace\
 	_calib\

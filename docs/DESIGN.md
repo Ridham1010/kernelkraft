@@ -115,10 +115,24 @@ outside the guest.
 
 ## Stage 5: Pipe donation
 
-Only policy 2 enables donation. A process is an over-approximate holder of a
-pipe when a non-UNUSED process has an open writable `FD_PIPE` for that pipe in
-its descriptor table. The scan intentionally reads `ofile` without another
-lock; this is a documented benign race in the xv6 process model.
+Only policy 2 enables donation. `struct pipe` records its writer side in
+`writer`: the last process that called `pipewrite()` on it (0 before the first
+write). `donation_target()` in `proc.c` decides who receives a blocked
+reader's deadline:
+
+- if the recorded writer still holds the write end, it alone receives it;
+- otherwise (nothing written yet, or the recorded writer closed its end or
+  exited) every process that holds a writable `FD_PIPE` for that pipe
+  receives it, because any of them may be the one that fills the pipe.
+
+The fallback is needed because the first read usually blocks before the first
+write, when no writer is recorded yet. The holder scan reads `ofile` without
+another lock; this is a documented benign race in the xv6 process model.
+
+Withdrawal uses the "recompute by scanning" option from the handout instead of
+a donor list: after any change, every donated field is cleared and rebuilt
+from the processes that are still waiting. Two donors to one writer therefore
+need no bookkeeping: removing one leaves the other's deadline in place.
 
 Immediately before a blocked `piperead()` sleeps, `pipe_wait_begin()` records
 the process's `waiting_pipe` and, when it has a finite effective deadline,
@@ -135,6 +149,12 @@ donations when a reader is killed or wakes while preserving donations from
 other readers. `exit()` clears the exiting process's wait edge and invokes the
 same recomputation while holding `ptable.lock`.
 
+Donation is otherwise decided when a reader goes to sleep, so `fork()` has one
+extra hook: if the child inherits the write end of a pipe that an urgent
+reader is already asleep on, the walk is run for that reader so the child
+receives the deadline too. `setsched()` withdraws every donation when the
+policy leaves 2 and rebuilds them when it enters 2.
+
 The lock path for the donation hook is `pipe->lock -> ptable.lock`: the pipe
 lock is held by `piperead()` when the hook starts, and the hook acquires and
 releases `ptable.lock` internally. No donation path acquires a pipe lock,
@@ -150,6 +170,10 @@ The empty donation sentinel requires an explicit check: because
 way to recognize an unset donation under modular subtraction.
 
 ### Overview
+
+The kernel boots in policy 2 (`DEFAULT_POLICY` in `sched_params.h`), because
+the assignment replaces round-robin. Policies 0 and 1 remain selectable as the
+baselines for the measurements.
 
 Stage 2 introduces a runtime-switchable scheduler with three policies:
 - **Policy 0 (RR):** Original round-robin scheduler (unchanged)
@@ -229,8 +253,10 @@ where a lower-index process would always win ties.
 ### Workflows
 
 A **workflow** is a group of processes sharing a common absolute deadline.
-Workflows are identified by a workflow ID (`wid`) in range `1..NWF-1` (where
-`NWF=8` from `sched_params.h`). Workflow 0 means "no workflow".
+Workflows are identified by any positive workflow ID (`wid`). The table has
+`NWF` slots (16, from `sched_params.h`) and a slot is found by searching for
+its `wid`, so `NWF` limits only how many workflows are alive at once.
+Workflow 0 means "no workflow".
 
 The workflow table is defined in `proc.c` and protected by `ptable.lock`:
 
@@ -245,13 +271,19 @@ struct workflow {
 ```
 
 **`setworkflow(wid, deadline)`** (syscall 25):
-- Validates `wid > 0 && wid < NWF` and `deadline > 0`
+- Validates `wid > 0` and `deadline > 0`
 - Rejects if the calling process already has a workflow (`wid != 0`)
-- First caller of a `wid` initializes `abs_deadline = now_ticks() + deadline`
-- Subsequent callers with same `wid` must match the existing `abs_deadline`
+- First caller of a `wid` creates the workflow with
+  `abs_deadline = now_ticks() + deadline`
+- Later callers with the same `wid` join it and take its existing
+  `abs_deadline`, whatever tick they call on; their `deadline` argument is
+  not used. This is how processes in one workflow share its deadline.
+- The table is written only after admission passes, so a refused call leaves
+  no slot behind
 - On success, sets `p->wid = wid` and `p->deadline = abs_deadline`
 
-**`exit()`** calls `wf_leave_locked()` to decrement `nmembers`; when it
+**`fork()`** gives the child its parent's `wid` and `deadline` and increments
+`nmembers`. **`exit()`** calls `wf_leave_locked()` to decrement it; when it
 reaches zero, the workflow slot is freed.
 
 ### Locking

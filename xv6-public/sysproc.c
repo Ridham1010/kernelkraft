@@ -118,14 +118,11 @@ sys_setsched(void)
   int policy;
   if(argint(0, &policy) < 0)
     return -1;
-  if(policy < 0 || policy > 2)
-    return -1;
-  sched_policy = policy;
-  return 0;
+  return sched_setpolicy(policy);
 }
 
 // Stage 2: setworkflow - assign process to workflow with deadline
-// wid: workflow ID (1..NWF-1)
+// wid: workflow ID (any positive integer)
 // deadline: relative deadline in ticks
 int
 sys_setworkflow(void)

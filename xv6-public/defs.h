@@ -105,6 +105,7 @@ int             piperead(struct pipe*, char*, int);
 int             pipewrite(struct pipe*, char*, int);
 void            pipe_wait_begin(struct pipe*);
 void            pipe_wait_end(void);
+struct proc*    pipe_writer(struct pipe*);
 
 //PAGEBREAK: 16
 // proc.c
@@ -130,7 +131,7 @@ void            yield(void);
 extern int      sched_policy;
 extern uint     runcounter;
 uint            now_ticks(void);
-int             admission_check_locked(struct proc*, int, uint);
+int             sched_setpolicy(int policy);
 // Workflow accessors (defined in proc.c)
 struct workflow* get_workflow(int wid);
 int             workflow_misses(void);

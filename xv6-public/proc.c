@@ -34,7 +34,7 @@ pinit(void)
 }
 
 // Stage 2: scheduling policy globals
-int sched_policy = 0;  // 0=rr, 1=edf, 2=edf_donate
+int sched_policy = DEFAULT_POLICY;  // 0=rr, 1=edf, 2=edf_donate
 uint runcounter = 0;   // Monotonic counter for tie-breaking
 static int global_misses;
 static int global_rejected;
@@ -59,9 +59,10 @@ struct donation_event {
 
 #define DONATE_EVENT 1
 #define CYCLE_EVENT 2
-#define DONATION_EVENT_MAX (NPROC * 2)
 
-// Stage 2: workflows table
+// Stage 2: workflows table. A slot is in use when wid != 0. Slots are found
+// by searching for the wid, so any positive wid is valid and NWF only bounds
+// how many workflows can be live at once.
 struct workflow {
   int wid;             // Workflow ID (0 = unused)
   uint abs_deadline;   // Absolute deadline for this workflow
@@ -69,6 +70,32 @@ struct workflow {
   int misses;          // Number of deadline misses
   int rejected;        // Number of rejected admissions
 } workflows[NWF];
+
+// Caller holds ptable.lock. Returns the live slot for wid, or 0.
+static struct workflow*
+wf_find_locked(int wid)
+{
+  int i;
+
+  if(wid <= 0)
+    return 0;
+  for(i = 0; i < NWF; i++)
+    if(workflows[i].wid == wid)
+      return &workflows[i];
+  return 0;
+}
+
+// Caller holds ptable.lock. Returns an unused slot, or 0 if the table is full.
+static struct workflow*
+wf_free_slot_locked(void)
+{
+  int i;
+
+  for(i = 0; i < NWF; i++)
+    if(workflows[i].wid == 0)
+      return &workflows[i];
+  return 0;
+}
 
 // Stage 2: Helper function - read ticks without lock (for use under ptable.lock)
 // Not static - called from sysproc.c
@@ -119,12 +146,12 @@ dl_before(uint a, uint b)
 
 // Stage 2: Helper function - get effective deadline for a process
 // Returns the more urgent (earlier) of deadline and donated
+// Firm deadlines (L-16): once a process has missed, its OWN deadline no
+// longer counts. A deadline donated by a reader that is still on time does.
 static uint
 effective(struct proc *p)
 {
-  if (p->missed)
-    return NO_DEADLINE;
-  uint d = p->deadline;
+  uint d = p->missed ? NO_DEADLINE : p->deadline;
   if (p->donated != NO_DEADLINE && dl_before(p->donated, d))
     return p->donated;
   return d;
@@ -146,6 +173,27 @@ holds_write_end(struct proc *q, struct pipe *pi)
        q->ofile[i]->pipe == pi && q->ofile[i]->writable)
       return 1;
   return 0;
+}
+
+// Should h receive the deadline of a reader blocked on the empty pipe pi?
+//
+// The pipe records its writer side (the last process that wrote to it). If
+// that process still holds the write end, it alone is the receiver. Before
+// the first write, or once the recorded writer has closed its end or
+// exited, nobody is recorded, so every process holding the write end may be
+// the one that fills the pipe and all of them receive the donation (L-05).
+// Caller holds ptable.lock.
+static int
+donation_target(struct proc *h, struct proc *reader, struct pipe *pi)
+{
+  struct proc *w;
+
+  if(h == reader)
+    return 0;
+  w = pipe_writer(pi);
+  if(w && w != reader && holds_write_end(w, pi))
+    return h == w;
+  return holds_write_end(h, pi);
 }
 
 struct donation_frame {
@@ -184,8 +232,7 @@ donate_walk_locked(struct proc *reader, uint deadline,
     }
     idx = frame->next++;
     h = &ptable.proc[idx];
-    if(h->state == UNUSED || !holds_write_end(h, frame->p->waiting_pipe) ||
-       h == frame->p)
+    if(!donation_target(h, frame->p, frame->p->waiting_pipe))
       continue;
     if(h->donated == NO_DEADLINE ||
        dl_before(frame->deadline, h->donated)){
@@ -244,6 +291,20 @@ print_donation_events(struct donation_event *events, int nevents)
       cprintf("donate: cycle\n");
 }
 
+// Clear all donated deadlines and emit WITHDRAW trace events.
+// Caller holds ptable.lock.
+static void
+clear_donations_locked(void)
+{
+  struct proc *q;
+
+  for(q = ptable.proc; q < &ptable.proc[NPROC]; q++)
+    if(q->state != UNUSED && q->donated != NO_DEADLINE) {
+      trace_event(cpuid(), q->pid, TRACE_WITHDRAW, q->donated);
+      q->donated = NO_DEADLINE;
+    }
+}
+
 static void
 recompute_donations_locked(void)
 {
@@ -251,12 +312,7 @@ recompute_donations_locked(void)
   uint d;
   int round, changed;
 
-  // Clear all donated deadlines and emit WITHDRAW trace events
-  for(q = ptable.proc; q < &ptable.proc[NPROC]; q++)
-    if(q->state != UNUSED && q->donated != NO_DEADLINE) {
-      trace_event(cpuid(), q->pid, TRACE_WITHDRAW, q->donated);
-      q->donated = NO_DEADLINE;
-    }
+  clear_donations_locked();
   for(round = 0; round < NPROC + 1; round++){
     changed = 0;
     for(q = ptable.proc; q < &ptable.proc[NPROC]; q++){
@@ -264,7 +320,7 @@ recompute_donations_locked(void)
          (d = effective(q)) == NO_DEADLINE)
         continue;
       for(h = ptable.proc; h < &ptable.proc[NPROC]; h++){
-        if(h != q && holds_write_end(h, q->waiting_pipe) &&
+        if(donation_target(h, q, q->waiting_pipe) &&
            (h->donated == NO_DEADLINE || dl_before(d, h->donated))){
           h->donated = d;
           changed = 1;
@@ -298,12 +354,9 @@ pipe_wait_begin(struct pipe *pi)
 void
 pipe_wait_end(void)
 {
-  struct donation_event events[DONATION_EVENT_MAX];
   struct proc *q;
-  int nevents;
   int waiting;
 
-  nevents = 0;
   acquire(&ptable.lock);
   myproc()->waiting_pipe = 0;
   if(sched_policy == 2){
@@ -316,38 +369,46 @@ pipe_wait_end(void)
       cycle_reported = 0;
   }
   release(&ptable.lock);
-  print_donation_events(events, nevents);
 }
 
-// Admission runs under ptable.lock and reports after releasing it.
+// Switch the scheduling policy. Donations exist only under policy 2, so
+// leaving it withdraws them all (effective() would otherwise keep using
+// stale values) and entering it rebuilds them from the current pipe waits.
 int
-admission_check_locked(struct proc *p, int wid, uint deadline)
+sched_setpolicy(int policy)
+{
+  if(policy < 0 || policy > 2)
+    return -1;
+  acquire(&ptable.lock);
+  sched_policy = policy;
+  if(policy == 2)
+    recompute_donations_locked();
+  else
+    clear_donations_locked();
+  release(&ptable.lock);
+  return 0;
+}
+
+// Admission test, called with ptable.lock held. Returns 0 to admit, or the
+// reason for refusal. It changes nothing: the caller does the accounting and
+// prints after releasing the lock. check_slack is 0 for a process joining a
+// workflow that was already admitted.
+static char*
+admission_reason_locked(int check_slack, uint deadline)
 {
   struct proc *q;
   int urgent = 0;
-  char *reason = 0;
 
-  if (deadline < MIN_SLACK) {
-    reason = "slack";
-  } else {
-    for (q = ptable.proc; q < &ptable.proc[NPROC]; q++) {
-      if (q->state != UNUSED && q->state != ZOMBIE &&
-          q->deadline != NO_DEADLINE)
-        urgent++;
-    }
-    if (urgent >= MAX_URGENT)
-      reason = "urgent";
+  if (check_slack && deadline < MIN_SLACK)
+    return "slack";
+  for (q = ptable.proc; q < &ptable.proc[NPROC]; q++) {
+    if (q->state != UNUSED && q->state != ZOMBIE &&
+        q->deadline != NO_DEADLINE)
+      urgent++;
   }
-  if (reason == 0)
-    return 0;
-
-  if (wid > 0 && wid < NWF && workflows[wid].wid == wid)
-    workflows[wid].rejected++;
-  global_rejected++;
-  release(&ptable.lock);
-  cprintf("admit: rejected pid=%d wid=%d deadline=%d reason=%s\n",
-          p->pid, wid, deadline, reason);
-  return -1;
+  if (urgent >= MAX_URGENT)
+    return "urgent";
+  return 0;
 }
 
 static void
@@ -361,24 +422,19 @@ mark_missed_locked(struct proc *p)
   p->missed = 1;
   global_misses++;
   trace_event(cpuid(), p->pid, TRACE_DEADLINE_MISS, p->deadline);
-  if (p->wid > 0 && p->wid < NWF) {
-    w = &workflows[p->wid];
-    if (w->wid == p->wid)
-      w->misses++;
-  }
+  w = wf_find_locked(p->wid);
+  if (w)
+    w->misses++;
 }
 
 // Stage 2: Workflow leave helper - called from exit() with ptable.lock held
 static void
 wf_leave_locked(struct proc *p)
 {
-  if (p->wid <= 0 || p->wid >= NWF)
-    return;
-  
-  struct workflow *w = &workflows[p->wid];
-  if (w->wid != p->wid)
-    return;  // Workflow not initialized or already freed
-  
+  struct workflow *w = wf_find_locked(p->wid);
+  if (w == 0)
+    return;  // No workflow, or already freed
+
   w->nmembers--;
   if (w->nmembers <= 0) {
     // Free the workflow slot
@@ -395,11 +451,7 @@ wf_leave_locked(struct proc *p)
 struct workflow*
 get_workflow(int wid)
 {
-  if (wid <= 0 || wid >= NWF)
-    return 0;
-  if (workflows[wid].wid != wid)
-    return 0;
-  return &workflows[wid];
+  return wf_find_locked(wid);
 }
 
 // Sum of misses across all workflows
@@ -427,57 +479,71 @@ workflow_rejected(void)
 }
 
 // Stage 2: sys_setworkflow implementation - called from sysproc.c
+//
+// The first caller for a wid creates the workflow with absolute deadline
+// now + deadline. Every later caller joins it and takes the workflow's
+// existing deadline, so all members share one deadline no matter which tick
+// they call on. Nothing is written to the table until admission has passed,
+// so a refused call leaves no slot behind.
 int
 sys_setworkflow_impl(int wid, int deadline)
 {
   struct proc *curproc = myproc();
-  uint now = now_ticks();
-  
-  // Validate wid: must be 1..NWF-1 (0 is reserved for no workflow)
-  if(wid <= 0 || wid >= NWF)
+  struct workflow *w;
+  char *reason;
+  uint abs;
+
+  // wid 0 means "no workflow"; any positive wid is valid
+  if(wid <= 0)
     return -1;
-  
+
   // Validate deadline: must be > 0
   if(deadline <= 0)
     return -1;
-  
-  // Check if process already has a workflow (cannot call twice)
-  if(curproc->wid != 0)
-    return -1;
-  
+
   acquire(&ptable.lock);
-  
-  // Check if workflow slot is already in use
-  struct workflow *w = get_workflow(wid);
-  if (w) {
-    // Workflow exists - check if deadline matches
-    if(w->abs_deadline != now + deadline) {
-      w->rejected++;
-      global_rejected++;
-      release(&ptable.lock);
-      return -1;
-    }
+
+  // A process joins at most one workflow (L-02)
+  if(curproc->wid != 0){
+    release(&ptable.lock);
+    return -1;
+  }
+
+  w = wf_find_locked(wid);
+  if(w){
+    abs = w->abs_deadline;
+    reason = admission_reason_locked(0, deadline);
   } else {
-    // First caller - initialize workflow
-    w = &workflows[wid];
+    abs = now_ticks() + deadline;
+    reason = admission_reason_locked(1, deadline);
+    if(reason == 0 && wf_free_slot_locked() == 0)
+      reason = "table";
+  }
+
+  if(reason){
+    if(w)
+      w->rejected++;
+    global_rejected++;
+    release(&ptable.lock);
+    cprintf("admit: rejected pid=%d wid=%d deadline=%d reason=%s\n",
+            curproc->pid, wid, deadline, reason);
+    return -1;
+  }
+
+  if(w == 0){
+    w = wf_free_slot_locked();
     w->wid = wid;
-    w->abs_deadline = now + deadline;
+    w->abs_deadline = abs;
     w->nmembers = 0;
     w->misses = 0;
     w->rejected = 0;
   }
-  
-  // Admission check (stub for now)
-  if(admission_check_locked(curproc, wid, deadline) < 0) {
-    // admission_check_locked releases ptable.lock after logging rejection.
-    return -1;
-  }
-  
+
   // Assign process to workflow
   curproc->wid = wid;
-  curproc->deadline = w->abs_deadline;
+  curproc->deadline = abs;
   w->nmembers++;
-  
+
   release(&ptable.lock);
   return 0;
 }
@@ -780,6 +846,10 @@ fork(void)
   int i, pid;
   struct proc *np;
   struct proc *curproc = myproc();
+  struct proc *q;
+  struct donation_event events[DONATION_EVENT_MAX];
+  int nevents = 0;
+  uint d;
 
   // Allocate process.
   if((np = allocproc()) == 0){
@@ -807,21 +877,38 @@ fork(void)
 
   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
 
-  // Stage 2: Copy scheduling fields from parent
+  pid = np->pid;
+
+  acquire(&ptable.lock);
+
+  // Stage 2: the child inherits its parent's workflow and own deadline and
+  // is counted as a member, so exit() can decrement nmembers symmetrically.
   np->wid = curproc->wid;
   np->deadline = curproc->deadline;
   np->donated = NO_DEADLINE;  // Donated deadline is not inherited
   np->waiting_pipe = 0;
   np->last_run = 0;
   np->missed = 0;
+  {
+    struct workflow *w = wf_find_locked(np->wid);
+    if(w)
+      w->nmembers++;
+  }
 
-  pid = np->pid;
-
-  acquire(&ptable.lock);
+  // Donation is otherwise decided when a reader goes to sleep. If the child
+  // has just inherited the write end of a pipe that an urgent reader is
+  // already asleep on, that reader now depends on the child too.
+  if(sched_policy == 2)
+    for(q = ptable.proc; q < &ptable.proc[NPROC]; q++)
+      if(q->state != UNUSED && q->waiting_pipe != 0 &&
+         (d = effective(q)) != NO_DEADLINE &&
+         donation_target(np, q, q->waiting_pipe))
+        donate_walk_locked(q, d, events, &nevents);
 
   np->state = RUNNABLE;
 
   release(&ptable.lock);
+  print_donation_events(events, nevents);
 
   return pid;
 }

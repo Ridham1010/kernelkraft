@@ -17,7 +17,18 @@ struct pipe {
   uint nwrite;    // number of bytes written
   int readopen;   // read fd is still open
   int writeopen;  // write fd is still open
+  struct proc *writer;  // writer side: last process that wrote, 0 before
+                        // the first write. Set under lock by pipewrite().
 };
+
+// The recorded writer side of a pipe, used by the donation code in proc.c.
+// Called with ptable.lock held and without p->lock: a single aligned word
+// read. The caller re-checks that the process still holds the write end.
+struct proc*
+pipe_writer(struct pipe *p)
+{
+  return p->writer;
+}
 
 int
 pipealloc(struct file **f0, struct file **f1)
@@ -34,6 +45,7 @@ pipealloc(struct file **f0, struct file **f1)
   p->writeopen = 1;
   p->nwrite = 0;
   p->nread = 0;
+  p->writer = 0;
   initlock(&p->lock, "pipe");
   (*f0)->type = FD_PIPE;
   (*f0)->readable = 1;
@@ -81,6 +93,7 @@ pipewrite(struct pipe *p, char *addr, int n)
   int i;
 
   acquire(&p->lock);
+  p->writer = myproc();  // record the writer side for donation
   for(i = 0; i < n; i++){
     while(p->nwrite == p->nread + PIPESIZE){  //DOC: pipewrite-full
       if(p->readopen == 0 || myproc()->killed){

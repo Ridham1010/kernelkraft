@@ -1,0 +1,30 @@
+Breakpoint 1 at 0x80104af0: file proc.c, line 716.
+The program is not being run.
+The program is not being run.
+Remote debugging using localhost:26000
+The target architecture is set to "i8086".
+[f000:fff0]    0xffff0:	ljmp   $0x3630,$0xf000e05b
+0x0000fff0 in ?? ()
+Continuing.
+The target architecture is set to "i386".
+=> 0x80104af0 <sys_setworkflow_impl>:	push   %ebp
+
+Breakpoint 1, sys_setworkflow_impl (wid=1, deadline=1) at proc.c:716
+716	  pushcli();
+Run till exit from #0  sys_setworkflow_impl (wid=1, deadline=1) at proc.c:716
+=> 0x8010746b <sys_setworkflow+59>:	add    $0x10,%esp
+0x8010746b in sys_setworkflow () at sysproc.c:136
+136	  return sys_setworkflow_impl(wid, deadline);
+Value returned is $1 = -1
+$2 = {{wid = 0, abs_deadline = 0, nmembers = 0, misses = 0, rejected = 0} <repeats 16 times>}
+Continuing.
+=> 0x80104af0 <sys_setworkflow_impl>:	push   %ebp
+
+Breakpoint 1, sys_setworkflow_impl (wid=1, deadline=200) at proc.c:716
+716	  pushcli();
+Run till exit from #0  sys_setworkflow_impl (wid=1, deadline=200) at proc.c:716
+=> 0x8010746b <sys_setworkflow+59>:	add    $0x10,%esp
+0x8010746b in sys_setworkflow () at sysproc.c:136
+136	  return sys_setworkflow_impl(wid, deadline);
+Value returned is $3 = 0
+$4 = {wid = 1, abs_deadline = 4593, nmembers = 1, misses = 0, rejected = 0}
