@@ -1,6 +1,6 @@
 graph: miss_vs_alpha.png
 input_csv: results/results.csv
 input_csv: results/summary.csv
-rows_used: 150
-commit_hash: cb7a589b
-rawlog_dir: logs/run_20261106
+rows_used: 240
+commit_hash: d4cb4e4c
+rawlog_dir: logs/run_20261111
