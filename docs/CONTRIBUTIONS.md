@@ -2,7 +2,7 @@
 
 Team KernelKraft, CSL3030 Operating Systems Lab, IIT Jodhpur.
 
-## Atharv Dhuvad (B24CS1085)
+## Atharv Dhuvad (B24CS1085) - [@centauri1219](https://github.com/centauri1219)
 
 **Project setup.** Imported the xv6 source tree and laid out the repository:
 the documentation skeleton, the host-side directory, the shared parameter
@@ -35,13 +35,13 @@ project in `proc.c` and `pipe.c`:
 
 - the wait hooks in `piperead` that record which pipe a process is asleep on;
 - the scan of file-descriptor tables that finds the processes holding a
-  pipe's write end;
+  pipe's write end;
 - the iterative depth-first donation walk with an explicit stack, which
-  carries a deadline back through a chain of pipes and detects cycles;
+  carries a deadline back through a chain of pipes and detects cycles;
 - withdrawal by clearing and recomputing all donations to a fixed point when
-  a reader wakes, exits or is killed;
+  a reader wakes, exits or is killed;
 - deferring kernel printing until `ptable.lock` is released, so that the
-  donation print mode cannot deadlock against the console.
+  donation print mode cannot deadlock against the console.
 
 Added the `procinfo` and `tracectl` system calls and the donation test
 programs `donatetest`, `donate5`, `cycletest`, `killtest` and `smallpipe`, and
@@ -49,7 +49,7 @@ ran them on one and three CPUs along with a 20-run stress test.
 
 **Report.** Edited the final project report.
 
-## Ridham Shah (B24CS1064)
+## Ridham Shah (B24CS1064) - [@Ridham1010](https://github.com/Ridham1010)
 
 **EDF scheduler.** Replaced the round-robin loop in `scheduler()` with a
 policy that can be switched at run time between round-robin, EDF and EDF with
@@ -81,15 +81,15 @@ wrote the viva questions and change drills, and extended the submission
 checker to verify documentation placeholders, evidence paths, contributor
 entries and the absence of build outputs in the archive.
 
-## Pranav H Nair (B24CS1056)
+## Pranav H Nair (B24CS1056) - [@pranav-codee](https://github.com/pranav-codee)
 
 **Host agent.** Built the host side of the project:
 
 - the bridge protocol, in which each command sent to xv6 is wrapped by the
-  `xrun` program with a random nonce so that echoed input cannot fake
-  completion, with recovery from timeouts and failed `exec`;
+  `xrun` program with a random nonce so that echoed input cannot fake
+  completion, with recovery from timeouts and failed `exec`;
 - the tool registry and the validator that checks tool names, argument types,
-  ranges and the file allowlist before anything reaches xv6;
+  ranges and the file allowlist before anything reaches xv6;
 - the deterministic planner, the agent loop and the audit log;
 - the test suite for the validator and bridge.
 
@@ -116,14 +116,14 @@ compares the two outcomes, with its tests.
 
 - the kernel boots in EDF with donation;
 - a process that calls `setworkflow` later joins the existing workflow and
-  shares its deadline;
+  shares its deadline;
 - a refused admission no longer leaves its table slot allocated, confirmed
-  before and after in GDB;
+  before and after in GDB;
 - `fork` counts the child as a workflow member;
 - `struct pipe` records its writer, which alone receives the donation once it
-  has written;
+  has written;
 - `fork` donates to a child that inherits a write end an urgent reader is
-  already asleep on, which fixed cycle detection on three CPUs.
+  already asleep on, which fixed cycle detection on three CPUs.
 
 Rewrote the donation tests so that only the urgent process holds a deadline,
 added `wftest`, ran the final 480-run batch, and wrote the report with the
