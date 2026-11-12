@@ -84,7 +84,7 @@ acted as -1; 305a13f treats it as the latest value. xv6 saw one CPU under
 `-smp 3` until `-machine pc-i440fx-yakkety` was passed. The first batch did
 not match PLAN (bytes 1024, cumulative kernel miss counter, clock started
 before the hogs), so 066060f aligned the code and the batch was rerun. The
-first batch is archived in `results/archive_v1/`.
+first batch is archived in `results/archive/batch1_20261104/`.
 
 ## Limits
 

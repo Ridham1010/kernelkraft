@@ -491,7 +491,7 @@ deadlines 58, 72, 96, 145, all inside PLAN's window W < D < (h+1)W (48.2 to
 
 The first Stage 7 batch (`commit_hash` 043a34b5, `wfgen 4 100 1024`,
 W = 24.4, α 1.0 to 3.0) did not match PLAN.md and is kept unchanged in
-`results/archive_v1/` with a README. Its raw logs remain in
+`results/archive/batch1_20261104/` with a README. Its raw logs remain in
 `logs/run_20261104/`, `logs/smoke_20261104/` and
 `logs/order_check_20261104/`; the paths inside its sidecars refer to the
 pre-archive locations.

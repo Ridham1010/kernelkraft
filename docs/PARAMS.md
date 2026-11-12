@@ -73,13 +73,13 @@ These values describe the PLAN-conformant second batch (`results/results.csv`).
 | 305a13f | Kernel fix: `NO_DEADLINE` ordering in `dl_before` (still in force) |
 | 066060f | Code aligned with PLAN.md: wfgen clock and miss rule, config, `harness/` layout, 10-column CSV, status `ok` |
 | 7fba9fa | W calibration 48.2 ticks (`logs/stage7rev-calibration/`); `W_ticks` set in `host/config.json` |
-| cb7a589 | Predictions Revision 2 and pilot (`results/pilot_rev.csv`, `logs/stage7rev-pilot/`), committed before the batch. Every second-batch row carries `commit_hash` cb7a589b; pilot rows carry 7fba9fae. |
+| cb7a589 | Predictions Revision 2 and pilot (`results/archive/batch2_20261106/pilot_rev.csv`, `logs/stage7rev-pilot/`), committed before the batch. Every second-batch row carries `commit_hash` cb7a589b; pilot rows carry 7fba9fae. |
 | d5f9314 | Data: second batch (210 rows), summary, plots, T-57/T-58 traces |
 | f3ab258 | T-59 adaptive agent rerun |
 
 ### Archived first batch
 
-The first Stage 7 batch did not match PLAN.md and is archived in `results/archive_v1/` (see its README).
+The first Stage 7 batch did not match PLAN.md and is archived in `results/archive/batch1_20261104/` (see its README).
 
 | Parameter | Value |
 |---|---|

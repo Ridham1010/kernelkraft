@@ -10,7 +10,7 @@ from harness import analyze
 
 FIELDS = ("policy", "cpus", "run", "alpha", "finish", "deadline", "miss",
           "status", "commit_hash", "rawlog_path")
-FIXTURE = Path(__file__).resolve().parents[2] / "results" / "fixture_results.csv"
+FIXTURE = Path(__file__).resolve().parent / "fixtures" / "fixture_results.csv"
 
 
 def row(policy, cpus, run, finish, deadline=37, miss=None, status="ok", alpha="1.5"):

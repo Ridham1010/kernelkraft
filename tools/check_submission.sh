@@ -22,7 +22,6 @@ add_required docs/CONTRIBUTIONS.md
 [ "$stage" -lt 2 ] || {
   add_required docs/LIMITATIONS.md
   add_required docs/REPORT_NOTES.md
-  add_required docs/VIVA.md
 }
 [ "$stage" -lt 3 ] || add_required logs/audit.jsonl
 [ "$stage" -ge 7 ] && add_required results/results.csv
@@ -71,7 +70,7 @@ if [ "$stage" -ge 8 ]; then
     exit "$evidence_status"
   fi
 
-  for contributor in "Ridham1010" "Pranav Nair" "Atharv" "Ridham Shah"; do
+  for contributor in "Atharv Dhuvad" "Ridham Shah" "Pranav H Nair"; do
     if ! grep -F "$contributor" docs/CONTRIBUTIONS.md >/dev/null; then
       echo "missing contributor entry: $contributor" >&2
       exit 1

@@ -181,7 +181,6 @@ UPROGS=\
 	_usertests\
 	_wc\
 	_zombie\
-	_mytest\
 	_hello_test\
 	_ticktest\
 	_add_test\
@@ -269,7 +268,7 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
 EXTRA=\
 	mkfs.c ulib.c user.h cat.c echo.c forktest.c grep.c kill.c xrun.c wfgen.c\
 	ln.c ls.c mkdir.c rm.c stressfs.c usertests.c wc.c zombie.c\
-	printf.c umalloc.c mytest.c hello_test.c ticktest.c add_test.c\
+	printf.c umalloc.c hello_test.c ticktest.c add_test.c\
 	schedctl.c schedstat.c edftest.c test_negative.c donatetest.c donate5.c\
 	cycletest.c killtest.c smallpipe.c schedtrace.c calib.c tracectl.c\
 	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\

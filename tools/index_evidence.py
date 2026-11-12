@@ -2,7 +2,7 @@
 """Generate the Stage 7 section of docs/EVIDENCE_INDEX.md from graph sidecars.
 
 Reads every <graph>.sources.txt that host/plots/plot_results.py writes into
-results/ (the default --plots-dir; not recursive, so results/archive_v1/ is
+results/ (the default --plots-dir; not recursive, so results/archive/batch1_20261104/ is
 not indexed) and
 emits one table row per graph: graph -> CSV path -> raw-log directory ->
 commit hash. Output goes either to a separate file (--out) or into an index

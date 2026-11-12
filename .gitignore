@@ -1,19 +1,35 @@
-# xv6 compiled artifacts
+# xv6 build outputs
 *.o
 *.d
 *.asm
 *.sym
-xv6.img
-fs.img
-kernel/kernel
-user/_*
-.gdbinit
+*.img
+xv6-public/_*
+xv6-public/kernel
+xv6-public/kernelmemfs
+xv6-public/bootblock
+xv6-public/bootblock.out
+xv6-public/bootblockother.out
+xv6-public/entryother
+xv6-public/entryother.out
+xv6-public/initcode
+xv6-public/initcode.out
+xv6-public/mkfs
+xv6-public/vectors.S
+xv6-public/.gdbinit
 
-# Agent and harness logs
-host/logs/*.raw
-host/logs/*.jsonl
-harness/*.csv
+# Packaged archives
+dist/
 
-# Python caches
+# Python
 __pycache__/
 *.py[cod]
+.pytest_cache/
+
+# Editor and OS files
+._*
+.DS_Store
+*.swp
+
+# Scratch logs written by the host test suite
+logs/*-deadbeef.run.raw

@@ -45,10 +45,10 @@ same commit; no pilot row is counted in the results.
 The first batch was run with a workload that did not match PLAN.md (bytes 1024
 below 4 x PIPESIZE, wfgen miss taken from the cumulative kernel counter, clock
 started before the hogs, a different alpha set). It is archived in
-results/archive_v1/. These predictions are for the PLAN-conformant batch.
+results/archive/batch1_20261104/. These predictions are for the PLAN-conformant batch.
 
 Disclosure: informed by the archived first batch and by a pilot on 2026-11-06
-(results/pilot_rev.csv, logs/stage7rev-pilot/, 2 runs per cell at alpha 1.5).
+(results/archive/batch2_20261106/pilot_rev.csv, logs/stage7rev-pilot/, 2 runs per cell at alpha 1.5).
 No pilot row is counted in the results.
 
 Setup: wfgen 4 100 2048 <deadline> <hogs>; hogs 3 (CPUS=1), 5 (CPUS=3);

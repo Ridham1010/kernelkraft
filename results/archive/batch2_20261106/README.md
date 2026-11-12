@@ -1,3 +1,5 @@
+> **Historical.** Batch of 2026-11-06 (210 runs, commit `cb7a589b`). The final results are in [`results/README.md`](../../README.md).
+
 Superseded by docs/results_template.md (PLAN-conformant batch); this file describes the archived first batch.
 
 # Stage 7 results
